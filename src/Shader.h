@@ -29,10 +29,10 @@ public:
 	Shader();
 
 	// Nacteni shader programu
-	const GLchar* loadShader(GLchar* path);
+	string loadShader(GLchar* path);
 
 	// Pripojeni a zkompilovani shaderu
-	void attachShader(GLuint type, const GLchar* code, GLboolean verbose);
+	void attachShader(GLuint type, const string code, GLboolean verbose);
 
 	// Sestaveni programu
 	GLuint compileProgram(GLboolean verbose);

@@ -71,7 +71,7 @@ GLFWwindow * Window::createWindow(){
 	glfwGetFramebufferSize(window, &w, &h);
 	glViewport(0, 0, w, h);
 
-	glEnable(GL_DEPTH_TEST);
+	//glEnable(GL_DEPTH_TEST);
 
 	return window;
 }

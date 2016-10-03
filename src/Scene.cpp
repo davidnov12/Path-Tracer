@@ -9,8 +9,8 @@
 
 #include "Scene.h"
 
-Scene::Scene(){
-
+Scene::Scene(vec3 lightPosition){
+	light = lightPosition;
 }
 
 vector<Sphere> Scene::getSpheres(){
@@ -19,6 +19,10 @@ vector<Sphere> Scene::getSpheres(){
 
 vector<Model> Scene::getModels(){
 	return models;
+}
+
+vec3 Scene::getLight(){
+	return light;
 }
 
 void Scene::addSphere(Sphere obj){

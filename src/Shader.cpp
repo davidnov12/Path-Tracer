@@ -8,6 +8,7 @@
 */
 
 #include "Shader.h"
+#include <stdlib.h>
 
 
 	Shader::Shader() {
@@ -20,9 +21,9 @@
 	}
 
 
-	const GLchar* Shader::loadShader(GLchar* path) {
+	string Shader::loadShader(GLchar* path) {
 
-		const GLchar* code;
+		
 		ifstream shaderFile;
 		shaderFile.exceptions(ifstream::badbit);
 
@@ -36,10 +37,11 @@
 			stream << shaderFile.rdbuf();
 			shaderFile.close();
 
-			// Obsah souboru
-			code = stream.str().c_str();
 
-			return (const GLchar*)code;
+			// Obsah souboru
+			string code = stream.str();
+
+			return code;// code;
 		}
 
 		catch (ifstream::failure e) {
@@ -52,7 +54,7 @@
 	}
 
 
-	void Shader::attachShader(GLuint type, const GLchar* code, GLboolean verbose) {
+	void Shader::attachShader(GLuint type, string code, GLboolean verbose) {
 
 		GLuint shader, kind;
 
@@ -83,9 +85,13 @@
 			break;
 		}
 
+		const GLchar* codes = code.c_str();
+
+		//cout << codes << endl;
+
 		// Kompilace shaderu
 		shader = glCreateShader(kind);
-		glShaderSource(shader, 1, &code, NULL);
+		glShaderSource(shader, 1, &codes, NULL);
 		glCompileShader(shader);
 		shaders[type] = shader;
 

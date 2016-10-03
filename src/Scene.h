@@ -20,11 +20,12 @@ class Scene {
 public:
 
 	// Konstruktor
-	Scene();
+	Scene(vec3 lightPosition);
 
 	// Ziskani obsahu sceny
 	vector<Sphere> getSpheres();
 	vector<Model> getModels();
+	vec3 getLight();
 
 	// Pridani objektu do sceny
 	void addSphere(Sphere obj);
@@ -35,4 +36,7 @@ private:
 	// Obsah sceny
 	vector<Sphere> spheres;
 	vector<Model> models;
+
+	// Svetlo sceny
+	vec3 light;
 };
