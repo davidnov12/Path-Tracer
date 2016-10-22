@@ -13,6 +13,7 @@
 #include <glm/glm.hpp>
 #include "Shader.h"
 #include "Scene.h"
+#include "Camera.h"
 
 using namespace glm;
 
@@ -21,7 +22,7 @@ class Render{
 public:
 
 	// Konstruktor
-	Render(Shader* program, Scene* scene, vec3 cameraPosition);
+	Render(Shader* program, Scene* scene, Camera* cam);
 
 	// Nastaveni uniformnich promennych v shaderech
 	void setUniforms();
@@ -46,8 +47,8 @@ private:
 	// Scena k vykresleni
 	Scene* scene;
 
-	// Pozice kamery
-	vec3 camera;
+	// kamery
+	Camera* camera;
 
 	// Vytvoreni VAO a VBO
 	void createBuffers();

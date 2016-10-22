@@ -10,43 +10,55 @@
 #include "Render.h"
 
 
-Render::Render(Shader* program, Scene* scene, vec3 cameraPosition){
+Render::Render(Shader* program, Scene* scene, Camera* cam){
 	this->program = program;
 	this->scene = scene;
-	camera = cameraPosition;
+	camera = cam;
 
 	// Nastaveni souradnic prumetny
-	screenCoords[0] = vec3(-1.0, -1.0, 1.0);
-	screenCoords[1] = vec3(-1.0, 1.0, 1.0);
-	screenCoords[2] = vec3(1.0, -1.0, 1.0);
-	screenCoords[3] = vec3(1.0, -1.0, 1.0);
-	screenCoords[4] = vec3(1.0, 1.0, 1.0);
-	screenCoords[5] = vec3(-1.0, 1.0, 1.0);
+	screenCoords[0] = vec3(-1.0, -1.0, -1.0);
+	screenCoords[1] = vec3(-1.0, 1.0, -1.0);
+	screenCoords[2] = vec3(1.0, -1.0, -1.0);
+	screenCoords[3] = vec3(1.0, -1.0, -1.0);
+	screenCoords[4] = vec3(1.0, 1.0, -1.0);
+	screenCoords[5] = vec3(-1.0, 1.0, -1.0);
 
 	createBuffers();
 }
 
 void Render::setUniforms(){
 	// Svetlo sceny
-	glUniform3f(glGetUniformLocation((*program).getProgram(), "light_pos"), (*scene).getLight().x, (*scene).getLight().y, (*scene).getLight().z);
+	glUniform3f(glGetUniformLocation(program->getProgram(), "light_pos"), scene->getLight().x, scene->getLight().y, scene->getLight().z);
 
 	// Kamera
-	glUniform3f(glGetUniformLocation((*program).getProgram(), "view_pos"), camera.x, camera.y, camera.z);
+	glUniform3f(glGetUniformLocation(program->getProgram(), "view_pos"), camera->getPosition().x, camera->getPosition().y, camera->getPosition().z);
 
+	// Inverzni VP matice
+	//mat4 view = lookAt(vec3(0), vec3(0, 0, 1), vec3(0, 1, 0));
+	mat4 inv_viewproj = inverse(camera->getProjMat() * camera->getViewMat());
+	glUniformMatrix4fv(glGetUniformLocation(program->getProgram(), "inv_viewproj"), 1, GL_FALSE, value_ptr(inv_viewproj));
+	
 	// Objekty sceny
+	glUniform3f(glGetUniformLocation(program->getProgram(), "spheres[0].center"), scene->getSpheres().at(0).getCenter().x, scene->getSpheres().at(0).getCenter().y, scene->getSpheres().at(0).getCenter().z);
+	glUniform3f(glGetUniformLocation(program->getProgram(), "spheres[0].color"), scene->getSpheres().at(0).getColor().r, scene->getSpheres().at(0).getColor().g, scene->getSpheres().at(0).getColor().b);
+	glUniform1f(glGetUniformLocation(program->getProgram(), "spheres[0].radius"), scene->getSpheres().at(0).getRadius());
+
+	glUniform3f(glGetUniformLocation(program->getProgram(), "spheres[1].center"), scene->getSpheres().at(1).getCenter().x, scene->getSpheres().at(1).getCenter().y, scene->getSpheres().at(1).getCenter().z);
+	glUniform3f(glGetUniformLocation(program->getProgram(), "spheres[1].color"), scene->getSpheres().at(1).getColor().r, scene->getSpheres().at(1).getColor().g, scene->getSpheres().at(1).getColor().b);
+	glUniform1f(glGetUniformLocation(program->getProgram(), "spheres[1].radius"), scene->getSpheres().at(1).getRadius());
 }
 
 void Render::draw(){
 	// Nastaveni programu
-	(*program).useProgram();
-	
-	//cout << program.getProgram() << endl;
-	//cout << vao << endl;
+	program->useProgram();
+
+	setUniforms();
 
 	// Kresleni
 	glBindVertexArray(vao);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
+	//glDrawArrays(GL_POINT, 0, 1);
 }
 
 void Render::finish(){
