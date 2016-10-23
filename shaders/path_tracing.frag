@@ -1,6 +1,6 @@
 #version 450
 
-#define MAX_BOUNCES 10
+#define MAX_BOUNCES 2
 
 uniform vec3 light_pos;
 uniform vec3 view_pos;
@@ -159,16 +159,17 @@ bool rayPlaneIntersection(Ray ray, out Intersection inter){
 
 
 // Spocitani nejblizsi kolize paprsku se scenou
-bool calculCollision(Ray ray, out Intersection inter){
+bool calculCollision(Ray ray, out Intersection inter, bool sh){
 
 	bool intersect = false;
 	Intersection coll;
 
 	int sphere_cnt = 2;
-
+	if(!sh){
 	if(rayPlaneIntersection(ray, coll)){
 		intersect = true;
 		inter = coll;
+	}
 	}
 
 	for(int i = 0; i < sphere_cnt; i++){
@@ -195,7 +196,7 @@ vec3 rayTrace(Ray first_ray){
 	Ray ray = first_ray;
 
 	while(bounces < MAX_BOUNCES && coef > 0.1){
-		if(calculCollision(ray, inter)){
+		if(calculCollision(ray, inter, false)){
 			if(lightD) return vec3(1.0);
 
 			// Vektor ke svetlu
@@ -218,11 +219,11 @@ vec3 rayTrace(Ray first_ray){
 			ray.position += 0.001 * ray.direction;
 
 			// Osvetleni v bode pruseciku
-			bool shadow = false;
+			//bool shadow = false;
 			/*Intersection n;
 			n.position = inter.position;
 			n.dist = inter.dist;*/
-			//bool shadow = calculCollision(light_ray, inter);
+			bool shadow = calculCollision(light_ray, inter, true);
 			ray_color += (0.2 * color) + ((shadow? 0 : 1) * max(dot(light_dir, normal), 0.0) * color * 0.8);
 
 			bounces += 1;
@@ -250,17 +251,19 @@ void main(){
 	ray.direction = ray_dir;
 
 	//color = vec4(ray_dir, 1.0);
-	spheres[0].center = vec3(-0.3, -0.08, -0.8);
-	spheres[0].radius = 0.09;
+	spheres[0].center = vec3(-0.15, -0.12, -0.35);
+	spheres[0].radius = 0.037;
+	spheres[0].color = vec3(0.6, 1.0, 0.0);
 	//spheres[0].color = vec3(0.7, 0.3, 0.6);
-	spheres[0].color = vec3(0.94);
-	spheres[0].reflectivity = 0.71;
+	//spheres[0].color = vec3(0.94);
+	spheres[0].reflectivity = 0.1;
 
-	spheres[1].center = vec3(0.24, 0.0, -0.6);
-	spheres[1].radius = 0.12;
+	spheres[1].center = vec3(0.2, -0.18, -0.17);
+	spheres[1].radius = 0.06;
+	spheres[1].color = vec3(0.6, 1.0, 0.0);
 	//spheres[1].color = vec3(0.3, 0.8, 0.5);
-	spheres[1].color = vec3(0.94);
-	spheres[1].reflectivity = 0.71;
+	//spheres[1].color = vec3(0.94);
+	spheres[1].reflectivity = 0.1;
 
 	//Intersection inter;
 	
