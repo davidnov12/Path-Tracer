@@ -35,6 +35,10 @@ void Window::swapBuffers(){
 	glfwSwapBuffers(window);
 }
 
+void Window::setTitle(string title){
+	glfwSetWindowTitle(window, title.c_str());
+}
+
 GLFWwindow * Window::createWindow(){
 	GLFWwindow* window;
 	int w, h;

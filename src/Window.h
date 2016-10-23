@@ -34,6 +34,9 @@ public:
 	// Prohozeni framebufferu
 	void swapBuffers();
 
+	// Nastaveni titulku okna
+	void setTitle(string title);
+
 private:
 
 	// Atributy okna
