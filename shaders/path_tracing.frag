@@ -1,6 +1,6 @@
 #version 450
 
-#define MAX_BOUNCES 4
+#define MAX_BOUNCES 10
 
 uniform vec3 light_pos;
 uniform vec3 view_pos;
@@ -21,6 +21,7 @@ struct Sphere{
 	vec3 center;
 	float radius;
 	vec3 color;
+	float reflectivity;
 };
 
 // Prusecik
@@ -29,134 +30,207 @@ struct Intersection{
 	vec3 position;
 	vec3 normal;
 	vec3 color;
+	float reflectivity;
 };
 
-uniform Sphere spheres[2];
+Sphere spheres[2];
 
+bool lightD = false;
 
 float ambient = 0.2;
 float diffuse = 0.8;
 
-// Spocitani pruseciku paprsek-rovina
-bool rayPlane(Ray ray, out Intersection inter){
 
-	//float dist = -(ray.position.y - height) / ray.direction.y;
-	//vec3 coll = ray.position + (ray.direction * dist);
+// Prusecik paprsku s kouli
+bool raySphereIntersection(Ray ray, Sphere sp, out Intersection inter){
+	
+	vec3 center = sp.center;
+	float radius = sp.radius;
 
-	float d = -1 / (ray.direction.z + ray.position.z );
+	float t0, t1;
+	vec3 L = center - ray.position;
+	float tca = dot(L, ray.direction);
+	
+	if (tca < 0) return false;
+	float d2 = dot(L, L) - tca * tca;
+	
+	if (d2 > radius) return false;
+	float thc = sqrt(radius - d2);
+	
+	t0 = tca - thc;
+	//t1 = tca + thc;
 
-	float x = ray.position.x + (d * ray.direction.x);
-	float y = ray.position.y + (d * ray.direction.y);
-
-	if(x >= -1.0 && x <= 1.0 && y >= -1.0 && y <= 1.0){
-		inter.dist = d;
-		inter.position = vec3(x, y, -1.0);
-		inter.normal = vec3(0.0, 0.0, 1.0);
-		inter.color = vec3(0.0, 0.7, 0.4);
-
-		return true;
-	}
-
-	/*if(dist > 0 && coll.x > -size && coll.z > -size  && coll.x < size && coll.z < size){
-		inter.dist = dist;
-		inter.position = coll;
-		inter.normal = ray.position.y > height? vec3(0, 1, 0) : vec3(0, -1, 0);
-		inter.color = vec3(0.0, 0.7, 0.4);
-
-		return true;
-	}*/
-
-	return false;
-}
-
-// Spocitani pruseciku paprsek-koule
-bool raySphere(Ray ray, Sphere sphere, out Intersection inter){
-
-	vec3 oc = ray.position - sphere.center;
-	float b = 2 * dot(ray.direction, oc);
-	float c = dot(oc, oc) - (sphere.radius * sphere.radius);
-	float d = b*b - 4*c;
-
-	if(d < 0)
-		return false;
-
-	float sd = sqrt(d);
-	float t1 = (-b + sd)/2;
-	float t2 = (-b - sd)/2;
-
-	if(t1 <= 0 && t2 <= 0)
-		return false;
-
-	inter.dist = (t1 > 0 && t1 < t2)? t1 : t2;
-	inter.position = ray.position + inter.dist * ray.direction;
-	inter.normal = normalize(inter.position - sphere.center);
-	inter.color = sphere.color;
+	inter.dist = t0;
+	inter.position = ray.position + (t0 * ray.direction);
+	inter.normal = normalize(inter.position - center);
+	inter.color = sp.color;
+	inter.reflectivity = sp.reflectivity;
 
 	return true;
 }
 
+// Prusecik paprsku s rovinou
+bool rayPlaneIntersection(Ray ray, out Intersection inter){
+	
+	// Horni Dolni
+	float planeHeight = -0.42;
+	float t = (planeHeight - ray.position.y) / ray.direction.y;
+	vec3 point = ray.position + (t * ray.direction);
+
+	if(point.z > -1.4 && point.z < 1.0 && point.x > -0.75 && point.x < 0.75){
+			inter.dist = t;
+			inter.position = point;
+			inter.normal = vec3(0.0, 1.0, 0.0);
+			inter.color = vec3(0.85);
+			inter.reflectivity = 0.28;
+
+			return true;	
+	}
+
+
+	planeHeight = 0.55;
+	t = (planeHeight - ray.position.y) / ray.direction.y;
+	point = ray.position + (t * ray.direction);
+
+	if(point.z > -1.4 && point.z < 1.0 && point.x > -0.75 && point.x < 0.75){
+			inter.dist = t;
+			inter.position = point;
+			inter.normal = vec3(0.0, -1.0, 0.0);
+			inter.color = vec3(0.85);
+			inter.reflectivity = 0.28;
+			
+
+			if(point.z > -0.09 && point.z < 0.09 && point.x > -0.09 && point.x < 0.09){
+				lightD = true;
+				
+			}
+
+			return true;
+	}
+
+	// Bocni
+	planeHeight = -0.75;
+	t = (planeHeight - ray.position.x) / ray.direction.x;
+	point = ray.position + (t * ray.direction);
+
+	if(point.z > -1.4 && point.z < 1.0 && point.y > -0.42 && point.y < 0.55){
+			inter.dist = t;
+			inter.position = point;
+			inter.normal = vec3(1.0, 0.0, 0.0);
+			//inter.color = vec3(0.6, 0.6, 0.2);
+			//inter.color = vec3(0.9, 0.0, 0.45);
+			inter.color = vec3(0.6, 1.0, 0.0);
+			inter.reflectivity = 0.19;
+
+			return true;	
+	}
+
+	planeHeight = 0.75;
+	t = (planeHeight - ray.position.x) / ray.direction.x;
+	point = ray.position + (t * ray.direction);
+
+	if(point.z > -1.4 && point.z < 1.0 && point.y > -0.42 && point.y < 0.55){
+			inter.dist = t;
+			inter.position = point;
+			inter.normal = vec3(-1.0, 0.0, 0.0);
+			inter.color = vec3(0.6, 1.0, 0.0);
+			inter.reflectivity = 0.19;
+
+			return true;	
+	}
+
+	// Predni
+	planeHeight = -1.4;
+	t = (planeHeight - ray.position.z) / ray.direction.z;
+	point = ray.position + (t * ray.direction);
+
+	if(point.x > -0.75 && point.x < 0.75 && point.y > -0.42 && point.y < 0.55){
+			inter.dist = t;
+			inter.position = point;
+			inter.normal = vec3(0.0, 0.0, 1.0);
+			inter.color = vec3(0.85);
+			inter.reflectivity = 0.12;
+			
+			return true;	
+	}
+
+	return false;
+}
+
+
 // Spocitani nejblizsi kolize paprsku se scenou
-bool calcCollision(Ray ray, out Intersection inter){
+bool calculCollision(Ray ray, out Intersection inter){
 
 	bool intersect = false;
 	Intersection coll;
 
-	/*if(rayPlane(ray, 10, -2, coll)){
-		intersect = true;
-		inter = coll;
-	}*/
+	int sphere_cnt = 2;
 
-	if(rayPlane(ray, coll)){
+	if(rayPlaneIntersection(ray, coll)){
 		intersect = true;
 		inter = coll;
 	}
 
-	/*int sphere_cnt = 2;
-
 	for(int i = 0; i < sphere_cnt; i++){
-		if(raySphere(ray, spheres[i], coll)){
+		if(raySphereIntersection(ray, spheres[i], coll)){
+		//if(raySphere(ray, spheres[i], coll)){
 			if(!intersect || coll.dist < inter.dist){
 				intersect = true;
 				inter = coll;
 			}
 		}
-	}*/
+	}
 
 	return intersect;
 }
+
 
 // Sledovani paprsku
 vec3 rayTrace(Ray first_ray){
 
 	vec3 ray_color = vec3(0.0);
+	float coef = 1.0;
 	Intersection inter;
 	int bounces = 0;
 	Ray ray = first_ray;
 
-	while(bounces < MAX_BOUNCES){
-		if(calcCollision(ray, inter)){
+	while(bounces < MAX_BOUNCES && coef > 0.1){
+		if(calculCollision(ray, inter)){
+			if(lightD) return vec3(1.0);
 
 			// Vektor ke svetlu
 			vec3 light_dir = normalize(light_pos - inter.position);
 
 			// Stinovy paprsek
-			Ray light_ray = Ray(inter.position, light_dir);
-			light_ray.position += 0.001 * light_ray.direction;
+			Ray light_ray;
+			light_ray.position = inter.position;
+			light_ray.direction = light_dir;
+			//light_ray.position += 0.001 * light_ray.direction;
 
+			//inter.color = inter.color * coef * (1.0 - inter.reflectivity);
+			vec3 color = inter.color;
+			vec3 normal = inter.normal;
+			color = color * coef * (1.0 - inter.reflectivity);
+
+			coef *= inter.reflectivity;
 			// Novy paprsek
 			ray = Ray(inter.position, reflect(ray.direction, inter.normal));
 			ray.position += 0.001 * ray.direction;
 
 			// Osvetleni v bode pruseciku
-			bool shadow = calcCollision(light_ray, inter);
-			ray_color += (ambient * inter.color) + ((shadow? 0 : 1) * max(dot(light_dir, inter.normal), 0.0) * inter.color * diffuse);
+			bool shadow = false;
+			/*Intersection n;
+			n.position = inter.position;
+			n.dist = inter.dist;*/
+			//bool shadow = calculCollision(light_ray, inter);
+			ray_color += (0.2 * color) + ((shadow? 0 : 1) * max(dot(light_dir, normal), 0.0) * color * 0.8);
 
 			bounces += 1;
 		}
 
 		else{
 			bounces = MAX_BOUNCES;
-			ray_color = vec3(0.8, 0.4, 0.2);
+			//ray_color = vec3(0.8, 0.4, 0.2);
 		}
 	}
 
@@ -164,69 +238,10 @@ vec3 rayTrace(Ray first_ray){
 }
 
 
-bool testCollision(Ray r){
-	vec3 center = vec3(-0.3, 0.0, -0.4);
-	float radius = 0.07;
-	float t0, t1;
-	vec3 L = center - r.position;
-	float tca = dot(L, r.direction);
-	if (tca < 0) return false;
-	float d2 = dot(L, L) - tca * tca;
-	if (d2 > radius) return false;
-	float thc = sqrt(radius - d2);
-	t0 = tca - thc;
-	t1 = tca + thc;
-
-	vec3 coll = r.position + (t0 * r.direction);
-	vec3 normal = coll - center;
-	normal = normalize(normal);
-	vec3 lightr = light_pos - coll;
-	lightr = normalize(lightr);
-
-	vec3 ambient = 0.2 * vec3(0.7, 0.3, 0.6);
-	vec3 diffuse = 0.8 * max(dot(lightr, normal), 0.0) * vec3(0.7, 0.3, 0.6);
-
-	vec3 res = ambient + diffuse;
-
-	color = vec4(res, 1.0);
-
-	return true;
-}
-
-bool sphere2(Ray r){
-	vec3 center = vec3(0.4, 0.0, -0.4);
-	float radius = 0.1;
-	float t0, t1;
-	vec3 L = center - r.position;
-	float tca = dot(L, r.direction);
-	if (tca < 0) return false;
-	float d2 = dot(L, L) - tca * tca;
-	if (d2 > radius) return false;
-	float thc = sqrt(radius - d2);
-	t0 = tca - thc;
-	t1 = tca + thc;
-
-	vec3 coll = r.position + (t0 * r.direction);
-	vec3 normal = coll - center;
-	normal = normalize(normal);
-	vec3 lightr = light_pos - coll;
-	lightr = normalize(lightr);
-
-	vec3 ambient = 0.2 * vec3(0.3, 0.8, 0.5);
-	vec3 diffuse = 0.8 * max(dot(lightr, normal), 0.0) * vec3(0.3, 0.8, 0.5);
-
-	vec3 res = ambient + diffuse;
-
-	color = vec4(res, 1.0);
-
-	return true;
-}
-
-
 void main(){
 
 	// Smer paprsku
-	vec3 ray_dir = vec3(scr_coord.x - view_pos.x, scr_coord.y - view_pos.y,  scr_coord.z - view_pos.z);
+	vec3 ray_dir = vec3(scr_coord - view_pos);
 	ray_dir = normalize(ray_dir);
 
 	// Originalni paprsek
@@ -235,15 +250,42 @@ void main(){
 	ray.direction = ray_dir;
 
 	//color = vec4(ray_dir, 1.0);
-	
-	if(testCollision(ray)); //color = vec4(0.7, 0.3, 0.6, 1.0);
-	else if(sphere2(ray));
-	else color = vec4(0.0);
-		
+	spheres[0].center = vec3(-0.3, -0.08, -0.8);
+	spheres[0].radius = 0.09;
+	//spheres[0].color = vec3(0.7, 0.3, 0.6);
+	spheres[0].color = vec3(0.94);
+	spheres[0].reflectivity = 0.71;
 
-	/*
-	if(mod(gl_FragCoord.x, 2.0) > 0.5) color = vec4(0.3, 0.8, 0.2, 1.0);
-	else color = vec4(0.3, 0.1, 0.8, 1.0);
-	*/
-	//color = vec4(0.3, 0.1, 0.8, 1.0);
+	spheres[1].center = vec3(0.24, 0.0, -0.6);
+	spheres[1].radius = 0.12;
+	//spheres[1].color = vec3(0.3, 0.8, 0.5);
+	spheres[1].color = vec3(0.94);
+	spheres[1].reflectivity = 0.71;
+
+	//Intersection inter;
+	
+	color = vec4(rayTrace(ray), 1.0);
+
+	/*if(calculCollision(ray, inter)){
+		vec3 lightr = light_pos - inter.position;
+		lightr = normalize(lightr);
+
+		Ray lightray;
+		lightray.position = inter.position;
+		lightray.direction = lightr;
+
+		Intersection n;
+
+		bool shadow = calculCollision(lightray, n);
+
+		vec3 ambient = 0.2 * inter.color;
+		vec3 diffuse = (shadow ? 0 : 1) * 0.8 * max(dot(lightr, inter.normal), 0.0) * inter.color;
+
+		vec3 res = ambient + diffuse;
+
+		color = vec4(res, 1.0);
+	}
+	
+	else color = vec4(0.0);*/
+	
 }
