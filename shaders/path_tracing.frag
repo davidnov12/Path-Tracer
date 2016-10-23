@@ -251,14 +251,14 @@ void main(){
 	ray.direction = ray_dir;
 
 	//color = vec4(ray_dir, 1.0);
-	spheres[0].center = vec3(-0.15, -0.12, -0.35);
+	spheres[0].center = vec3(-0.15, -0.1777, -0.45);
 	spheres[0].radius = 0.037;
 	spheres[0].color = vec3(0.6, 1.0, 0.0);
 	//spheres[0].color = vec3(0.7, 0.3, 0.6);
 	//spheres[0].color = vec3(0.94);
 	spheres[0].reflectivity = 0.1;
 
-	spheres[1].center = vec3(0.2, -0.18, -0.17);
+	spheres[1].center = vec3(0.2, -0.2, -0.12);
 	spheres[1].radius = 0.06;
 	spheres[1].color = vec3(0.6, 1.0, 0.0);
 	//spheres[1].color = vec3(0.3, 0.8, 0.5);
