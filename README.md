@@ -15,4 +15,5 @@ Implemented Ray Tracing method.
 ## Example
 
 ![Cornell Box](example/raytracer.png?raw=true "Cornell Box")
+
 Cornell Box
