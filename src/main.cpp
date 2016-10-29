@@ -34,8 +34,8 @@ int main() {
 	cornell.addSphere(p);
 
 	// Priprava a kompilace shaderu
-	path.attachShader(Shader::VERTEX, path.loadShader("shaders/path_tracing.vert"), GL_TRUE);
-	path.attachShader(Shader::FRAGMENT, path.loadShader("shaders/path_tracing.frag"), GL_TRUE);
+	path.attachShader(Shader::VERTEX, path.loadShader("../src/shaders/path_tracing.vert"), GL_TRUE);
+	path.attachShader(Shader::FRAGMENT, path.loadShader("../src/shaders/path_tracing.frag"), GL_TRUE);
 	path.compileProgram(GL_TRUE);
 
 	tracer.setUniforms();
