@@ -58,7 +58,6 @@ bool raySphereIntersection(Ray ray, Sphere sp, out Intersection inter){
 	float thc = sqrt(radius - d2);
 	
 	t0 = tca - thc;
-	//t1 = tca + thc;
 
 	inter.dist = t0;
 	inter.position = ray.position + (t0 * ray.direction);
@@ -101,10 +100,8 @@ bool rayPlaneIntersection(Ray ray, out Intersection inter){
 			
 
 			if(point.z > -0.09 && point.z < 0.09 && point.x > -0.09 && point.x < 0.09){
-				lightD = true;
-				
+				lightD = true;	
 			}
-
 			return true;
 	}
 
@@ -166,15 +163,14 @@ bool calculCollision(Ray ray, out Intersection inter, bool sh){
 
 	int sphere_cnt = 2;
 	if(!sh){
-	if(rayPlaneIntersection(ray, coll)){
-		intersect = true;
-		inter = coll;
-	}
+		if(rayPlaneIntersection(ray, coll)){
+			intersect = true;
+			inter = coll;
+		}
 	}
 
 	for(int i = 0; i < sphere_cnt; i++){
 		if(raySphereIntersection(ray, spheres[i], coll)){
-		//if(raySphere(ray, spheres[i], coll)){
 			if(!intersect || coll.dist < inter.dist){
 				intersect = true;
 				inter = coll;
@@ -206,9 +202,7 @@ vec3 rayTrace(Ray first_ray){
 			Ray light_ray;
 			light_ray.position = inter.position;
 			light_ray.direction = light_dir;
-			//light_ray.position += 0.001 * light_ray.direction;
 
-			//inter.color = inter.color * coef * (1.0 - inter.reflectivity);
 			vec3 color = inter.color;
 			vec3 normal = inter.normal;
 			color = color * coef * (1.0 - inter.reflectivity);
@@ -219,10 +213,6 @@ vec3 rayTrace(Ray first_ray){
 			ray.position += 0.001 * ray.direction;
 
 			// Osvetleni v bode pruseciku
-			//bool shadow = false;
-			/*Intersection n;
-			n.position = inter.position;
-			n.dist = inter.dist;*/
 			bool shadow = calculCollision(light_ray, inter, true);
 			ray_color += (0.2 * color) + ((shadow? 0 : 1) * max(dot(light_dir, normal), 0.0) * color * 0.8);
 
@@ -231,7 +221,6 @@ vec3 rayTrace(Ray first_ray){
 
 		else{
 			bounces = MAX_BOUNCES;
-			//ray_color = vec3(0.8, 0.4, 0.2);
 		}
 	}
 
@@ -250,45 +239,15 @@ void main(){
 	ray.position = view_pos;
 	ray.direction = ray_dir;
 
-	//color = vec4(ray_dir, 1.0);
 	spheres[0].center = vec3(-0.15, -0.1777, -0.45);
 	spheres[0].radius = 0.037;
 	spheres[0].color = vec3(0.6, 1.0, 0.0);
-	//spheres[0].color = vec3(0.7, 0.3, 0.6);
-	//spheres[0].color = vec3(0.94);
 	spheres[0].reflectivity = 0.1;
 
 	spheres[1].center = vec3(0.2, -0.2, -0.12);
 	spheres[1].radius = 0.06;
 	spheres[1].color = vec3(0.6, 1.0, 0.0);
-	//spheres[1].color = vec3(0.3, 0.8, 0.5);
-	//spheres[1].color = vec3(0.94);
 	spheres[1].reflectivity = 0.1;
-
-	//Intersection inter;
 	
-	color = vec4(rayTrace(ray), 1.0);
-
-	/*if(calculCollision(ray, inter)){
-		vec3 lightr = light_pos - inter.position;
-		lightr = normalize(lightr);
-
-		Ray lightray;
-		lightray.position = inter.position;
-		lightray.direction = lightr;
-
-		Intersection n;
-
-		bool shadow = calculCollision(lightray, n);
-
-		vec3 ambient = 0.2 * inter.color;
-		vec3 diffuse = (shadow ? 0 : 1) * 0.8 * max(dot(lightr, inter.normal), 0.0) * inter.color;
-
-		vec3 res = ambient + diffuse;
-
-		color = vec4(res, 1.0);
-	}
-	
-	else color = vec4(0.0);*/
-	
+	color = vec4(rayTrace(ray), 1.0);	
 }
