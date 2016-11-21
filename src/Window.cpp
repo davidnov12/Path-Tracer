@@ -51,7 +51,7 @@ GLFWwindow * Window::createWindow(){
 	glfwWindowHint(GLFW_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_VERSION_MINOR, 2);
 	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-
+	glfwWindowHint(GLFW_SAMPLES, 16);
 	// Vytvoreni okna
 	window = glfwCreateWindow(width, height, title.c_str(), NULL, NULL);
 
