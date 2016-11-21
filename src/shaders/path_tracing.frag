@@ -81,7 +81,7 @@ uint randXorshift(){
 
 // Prevedeni cisla do rozsahu <0, 1>
 float clampNumber(uint num){
-	return num / 4294967296.0;
+	return float(num) / 4294967296.0;
 }
 
 //--------------------------------------------
