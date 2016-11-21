@@ -60,7 +60,7 @@ uint seed;
 
 
 // Priprava seedu
-void seed_init(){
+void seedInit(){
 	seed = gl_SampleID;
 	seed = (seed ^ 61) ^ (seed >> 16);
     seed *= 9;
@@ -71,7 +71,7 @@ void seed_init(){
 
 
 // Generator pseudonahodnych cisel
-uint rand_xorshift(){
+uint randXorshift(){
     seed ^= (seed << 13);
     seed ^= (seed >> 17);
     seed ^= (seed << 5);
@@ -80,7 +80,7 @@ uint rand_xorshift(){
 
 
 // Prevedeni cisla do rozsahu <0, 1>
-float clamp_number(uint num){
+float clampNumber(uint num){
 	return num / 4294967296.0;
 }
 
@@ -90,7 +90,7 @@ float clamp_number(uint num){
 //--Funkce pro indirect illumination----------
 //--------------------------------------------
 // Vygenerovani nahodneho smeru uvnitr polokoule na zaklade nahodnych cisel
-vec3 random_direction(float rand1, float rand2){
+vec3 randomDirection(float rand1, float rand2){
 	float sinTheta = sqrt(1 - rand1 * rand1);
 	float phi = 2 * PI * rand2;
 	float x = sinTheta * cos(phi);
@@ -100,7 +100,7 @@ vec3 random_direction(float rand1, float rand2){
 
 
 // Spocitani tangenty a binormaly
-void calc_tb(vec3 normal, out vec3 tangent, out vec3 bitangent){
+void calcTB(vec3 normal, out vec3 tangent, out vec3 bitangent){
 	
 	if(abs(normal.x) > abs(normal.y))
 		tangent = vec3(normal.z, 0.0, -normal.x) / sqrt(normal.x * normal.x + normal.z * normal.z);
@@ -115,7 +115,7 @@ void calc_tb(vec3 normal, out vec3 tangent, out vec3 bitangent){
 
 
 // Prevedni vygenerovaneho smeru do lokalniho souradneho systemu v bode kolize
-vec3 convert_to_btn(vec3 original, vec3 normal, vec3 tangent, vec3 bitangent){
+vec3 convertToBNT(vec3 original, vec3 normal, vec3 tangent, vec3 bitangent){
 	mat3 trans = mat3(bitangent, normal, tangent);
 	vec3 dir = trans * original;
 	return dir;	
