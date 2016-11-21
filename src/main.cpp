@@ -28,8 +28,8 @@ int main() {
 
 
 	// Vyplneni sceny
-	Sphere s(0.3, vec3(0.4, 0.3, -0.5), vec3(0.7, 0.4, 0.0), 0.0);
-	Sphere p(0.2, vec3(-0.4, 0.2, -0.3), vec3(0.7, 0.0, 0.5), 0.0);
+	Sphere s(0.037, vec3(-0.15, -0.2777, -0.45), vec3(0.6, 1.0, 0.0), 0.1);
+	Sphere p(0.06, vec3(0.2, -0.2777, -0.12), vec3(0.6, 0.1, 0.97), 0.0);
 	cornell.addSphere(s);
 	cornell.addSphere(p);
 

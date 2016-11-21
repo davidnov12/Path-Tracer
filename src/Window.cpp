@@ -52,6 +52,7 @@ GLFWwindow * Window::createWindow(){
 	glfwWindowHint(GLFW_VERSION_MINOR, 2);
 	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 	glfwWindowHint(GLFW_SAMPLES, 16);
+
 	// Vytvoreni okna
 	window = glfwCreateWindow(width, height, title.c_str(), NULL, NULL);
 
@@ -75,6 +76,7 @@ GLFWwindow * Window::createWindow(){
 	glfwGetFramebufferSize(window, &w, &h);
 	glViewport(0, 0, w, h);
 
+	glEnable(GL_MULTISAMPLE);
 	//glEnable(GL_DEPTH_TEST);
 
 	return window;

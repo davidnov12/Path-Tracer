@@ -1,10 +1,11 @@
 #version 450
 
-#define MAX_BOUNCES 2
+#define MAX_BOUNCES 4
 
 uniform vec3 light_pos;
 uniform vec3 view_pos;
 uniform mat4 inv_viewproj;
+
 
 in vec3 scr_coord;
 
@@ -33,13 +34,99 @@ struct Intersection{
 	float reflectivity;
 };
 
-Sphere spheres[2];
+int samples_per_pixel = 256;
 
-bool lightD = false;
+uniform Sphere spheres[2];
+bool light_source = false;
 
 float ambient = 0.2;
 float diffuse = 0.8;
 
+#define LEFT -0.7
+#define RIGHT 0.7
+#define UP 0.52
+#define DOWN -0.52
+#define FRONT -1.4
+
+#define X 0
+#define Y 1
+#define Z 2
+
+#define PI 3.1415926535
+
+//--Generator nahodnych cisel-----------------
+//--------------------------------------------
+uint seed;
+
+
+// Priprava seedu
+void seed_init(){
+	seed = gl_SampleID;
+	seed = (seed ^ 61) ^ (seed >> 16);
+    seed *= 9;
+    seed = seed ^ (seed >> 4);
+    seed *= 0x27d4eb2d;
+    seed = seed ^ (seed >> 15);
+}
+
+
+// Generator pseudonahodnych cisel
+uint rand_xorshift(){
+    seed ^= (seed << 13);
+    seed ^= (seed >> 17);
+    seed ^= (seed << 5);
+    return seed;
+}
+
+
+// Prevedeni cisla do rozsahu <0, 1>
+float clamp_number(uint num){
+	return num / 4294967296.0;
+}
+
+//--------------------------------------------
+//--------------------------------------------
+
+//--Funkce pro indirect illumination----------
+//--------------------------------------------
+// Vygenerovani nahodneho smeru uvnitr polokoule na zaklade nahodnych cisel
+vec3 random_direction(float rand1, float rand2){
+	float sinTheta = sqrt(1 - rand1 * rand1);
+	float phi = 2 * PI * rand2;
+	float x = sinTheta * cos(phi);
+	float z = sinTheta * sin(phi);
+	return vec3(x, rand1, z); 
+}
+
+
+// Spocitani tangenty a binormaly
+void calc_tb(vec3 normal, out vec3 tangent, out vec3 bitangent){
+	
+	if(abs(normal.x) > abs(normal.y))
+		tangent = vec3(normal.z, 0.0, -normal.x) / sqrt(normal.x * normal.x + normal.z * normal.z);
+	else
+		tangent = vec3(0.0, -normal.z, normal.y) / sqrt(normal.y * normal.y + normal.z * normal.z);
+
+	tangent = normalize(tangent);
+
+	bitangent = cross(normal, tangent);
+	bitangent = normalize(bitangent);
+}
+
+
+// Prevedni vygenerovaneho smeru do lokalniho souradneho systemu v bode kolize
+vec3 convert_to_btn(vec3 original, vec3 normal, vec3 tangent, vec3 bitangent){
+	mat3 trans = mat3(bitangent, normal, tangent);
+	vec3 dir = trans * original;
+	return dir;	
+}
+
+//--------------------------------------------
+//--------------------------------------------
+
+
+//--Pruseciky---------------------------------
+//--------------------------------------------
 
 // Prusecik paprsku s kouli
 bool raySphereIntersection(Ray ray, Sphere sp, out Intersection inter){
@@ -58,6 +145,7 @@ bool raySphereIntersection(Ray ray, Sphere sp, out Intersection inter){
 	float thc = sqrt(radius - d2);
 	
 	t0 = tca - thc;
+	//t1 = tca + thc;
 
 	inter.dist = t0;
 	inter.position = ray.position + (t0 * ray.direction);
@@ -69,14 +157,13 @@ bool raySphereIntersection(Ray ray, Sphere sp, out Intersection inter){
 }
 
 // Prusecik paprsku s rovinou
-bool rayPlaneIntersection(Ray ray, out Intersection inter){
+bool rayBoxIntersection(Ray ray, out Intersection inter){
 	
-	// Horni Dolni
-	float planeHeight = -0.42;
+	// Dolni stena
+	float planeHeight = DOWN;
 	float t = (planeHeight - ray.position.y) / ray.direction.y;
 	vec3 point = ray.position + (t * ray.direction);
-
-	if(point.z > -1.4 && point.z < 1.0 && point.x > -0.75 && point.x < 0.75){
+	if(point.z > FRONT && point.z < 1.0 && point.x > LEFT && point.x < RIGHT){
 			inter.dist = t;
 			inter.position = point;
 			inter.normal = vec3(0.0, 1.0, 0.0);
@@ -85,63 +172,64 @@ bool rayPlaneIntersection(Ray ray, out Intersection inter){
 
 			return true;	
 	}
-
-
-	planeHeight = 0.55;
+	
+	// Horni stena
+	planeHeight = UP;
 	t = (planeHeight - ray.position.y) / ray.direction.y;
 	point = ray.position + (t * ray.direction);
 
-	if(point.z > -1.4 && point.z < 1.0 && point.x > -0.75 && point.x < 0.75){
+	if(point.z > FRONT && point.z < 1.0 && point.x > LEFT && point.x < RIGHT){
 			inter.dist = t;
 			inter.position = point;
 			inter.normal = vec3(0.0, -1.0, 0.0);
 			inter.color = vec3(0.85);
 			inter.reflectivity = 0.28;
 			
+			// Svetlo 
+			if(point.z > -0.13 && point.z < 0.13 && point.x > -0.13 && point.x < 0.13)
+				light_source = true;
 
-			if(point.z > -0.09 && point.z < 0.09 && point.x > -0.09 && point.x < 0.09){
-				lightD = true;	
-			}
 			return true;
 	}
 
-	// Bocni
-	planeHeight = -0.75;
+	// Leva stena
+	planeHeight = LEFT;
 	t = (planeHeight - ray.position.x) / ray.direction.x;
 	point = ray.position + (t * ray.direction);
 
-	if(point.z > -1.4 && point.z < 1.0 && point.y > -0.42 && point.y < 0.55){
+	if(point.z > FRONT && point.z < 1.0 && point.y > DOWN && point.y < UP){
 			inter.dist = t;
 			inter.position = point;
 			inter.normal = vec3(1.0, 0.0, 0.0);
-			//inter.color = vec3(0.6, 0.6, 0.2);
-			//inter.color = vec3(0.9, 0.0, 0.45);
-			inter.color = vec3(0.6, 1.0, 0.0);
+			//inter.color = vec3(0.6, 1.0, 0.0);
+			inter.color = vec3(0.6, 0.1, 0.97);
 			inter.reflectivity = 0.19;
 
 			return true;	
 	}
 
-	planeHeight = 0.75;
+	// Prava stena
+	planeHeight = RIGHT;
 	t = (planeHeight - ray.position.x) / ray.direction.x;
 	point = ray.position + (t * ray.direction);
 
-	if(point.z > -1.4 && point.z < 1.0 && point.y > -0.42 && point.y < 0.55){
+	if(point.z > FRONT && point.z < 1.0 && point.y > DOWN && point.y < UP){
 			inter.dist = t;
 			inter.position = point;
 			inter.normal = vec3(-1.0, 0.0, 0.0);
-			inter.color = vec3(0.6, 1.0, 0.0);
+			//inter.color = vec3(0.6, 1.0, 0.0);
+			inter.color = vec3(0.6, 0.1, 0.97);
 			inter.reflectivity = 0.19;
 
 			return true;	
 	}
 
-	// Predni
-	planeHeight = -1.4;
+	// Predni stena
+	planeHeight = FRONT;
 	t = (planeHeight - ray.position.z) / ray.direction.z;
 	point = ray.position + (t * ray.direction);
 
-	if(point.x > -0.75 && point.x < 0.75 && point.y > -0.42 && point.y < 0.55){
+	if(point.x > LEFT && point.x < RIGHT && point.y > DOWN && point.y < UP){
 			inter.dist = t;
 			inter.position = point;
 			inter.normal = vec3(0.0, 0.0, 1.0);
@@ -156,14 +244,14 @@ bool rayPlaneIntersection(Ray ray, out Intersection inter){
 
 
 // Spocitani nejblizsi kolize paprsku se scenou
-bool calculCollision(Ray ray, out Intersection inter, bool sh){
+bool calculCollision(Ray ray, out Intersection inter, bool shadow){
 
 	bool intersect = false;
 	Intersection coll;
 
 	int sphere_cnt = 2;
-	if(!sh){
-		if(rayPlaneIntersection(ray, coll)){
+	if(!shadow){
+		if(rayBoxIntersection(ray, coll)){
 			intersect = true;
 			inter = coll;
 		}
@@ -181,6 +269,8 @@ bool calculCollision(Ray ray, out Intersection inter, bool sh){
 	return intersect;
 }
 
+//--------------------------------------------
+//--------------------------------------------
 
 // Sledovani paprsku
 vec3 rayTrace(Ray first_ray){
@@ -193,7 +283,7 @@ vec3 rayTrace(Ray first_ray){
 
 	while(bounces < MAX_BOUNCES && coef > 0.1){
 		if(calculCollision(ray, inter, false)){
-			if(lightD) return vec3(1.0);
+			if(light_source) return vec3(1.0);
 
 			// Vektor ke svetlu
 			vec3 light_dir = normalize(light_pos - inter.position);
@@ -202,7 +292,7 @@ vec3 rayTrace(Ray first_ray){
 			Ray light_ray;
 			light_ray.position = inter.position;
 			light_ray.direction = light_dir;
-
+			
 			vec3 color = inter.color;
 			vec3 normal = inter.normal;
 			color = color * coef * (1.0 - inter.reflectivity);
@@ -238,16 +328,7 @@ void main(){
 	Ray ray;
 	ray.position = view_pos;
 	ray.direction = ray_dir;
-
-	spheres[0].center = vec3(-0.15, -0.1777, -0.45);
-	spheres[0].radius = 0.037;
-	spheres[0].color = vec3(0.6, 1.0, 0.0);
-	spheres[0].reflectivity = 0.1;
-
-	spheres[1].center = vec3(0.2, -0.2, -0.12);
-	spheres[1].radius = 0.06;
-	spheres[1].color = vec3(0.6, 1.0, 0.0);
-	spheres[1].reflectivity = 0.1;
 	
+	// Barva pixelu
 	color = vec4(rayTrace(ray), 1.0);	
 }

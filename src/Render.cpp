@@ -42,10 +42,12 @@ void Render::setUniforms(){
 	glUniform3f(glGetUniformLocation(program->getProgram(), "spheres[0].center"), scene->getSpheres().at(0).getCenter().x, scene->getSpheres().at(0).getCenter().y, scene->getSpheres().at(0).getCenter().z);
 	glUniform3f(glGetUniformLocation(program->getProgram(), "spheres[0].color"), scene->getSpheres().at(0).getColor().r, scene->getSpheres().at(0).getColor().g, scene->getSpheres().at(0).getColor().b);
 	glUniform1f(glGetUniformLocation(program->getProgram(), "spheres[0].radius"), scene->getSpheres().at(0).getRadius());
+	glUniform1f(glGetUniformLocation(program->getProgram(), "spheres[0].reflectivity"), scene->getSpheres().at(0).getProbability());
 
 	glUniform3f(glGetUniformLocation(program->getProgram(), "spheres[1].center"), scene->getSpheres().at(1).getCenter().x, scene->getSpheres().at(1).getCenter().y, scene->getSpheres().at(1).getCenter().z);
 	glUniform3f(glGetUniformLocation(program->getProgram(), "spheres[1].color"), scene->getSpheres().at(1).getColor().r, scene->getSpheres().at(1).getColor().g, scene->getSpheres().at(1).getColor().b);
 	glUniform1f(glGetUniformLocation(program->getProgram(), "spheres[1].radius"), scene->getSpheres().at(1).getRadius());
+	glUniform1f(glGetUniformLocation(program->getProgram(), "spheres[1].reflectivity"), scene->getSpheres().at(1).getProbability());
 }
 
 void Render::draw(){
