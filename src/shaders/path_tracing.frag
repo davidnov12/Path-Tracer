@@ -167,8 +167,8 @@ bool rayBoxIntersection(Ray ray, out Intersection inter){
 			inter.dist = t;
 			inter.position = point;
 			inter.normal = vec3(0.0, 1.0, 0.0);
-			inter.color = vec3(0.85);
-			inter.reflectivity = 0.28;
+			inter.color = vec3(0.8);
+			inter.reflectivity = 0.1;
 
 			return true;	
 	}
@@ -182,8 +182,8 @@ bool rayBoxIntersection(Ray ray, out Intersection inter){
 			inter.dist = t;
 			inter.position = point;
 			inter.normal = vec3(0.0, -1.0, 0.0);
-			inter.color = vec3(0.85);
-			inter.reflectivity = 0.28;
+			inter.color = vec3(0.8);
+			inter.reflectivity = 0.1;
 			
 			// Svetlo 
 			if(point.z > -0.13 && point.z < 0.13 && point.x > -0.13 && point.x < 0.13)
@@ -202,8 +202,8 @@ bool rayBoxIntersection(Ray ray, out Intersection inter){
 			inter.position = point;
 			inter.normal = vec3(1.0, 0.0, 0.0);
 			//inter.color = vec3(0.6, 1.0, 0.0);
-			inter.color = vec3(0.6, 0.1, 0.97);
-			inter.reflectivity = 0.19;
+			inter.color = vec3(0.6, 1.0, 0.0);
+			inter.reflectivity = 0.1;
 
 			return true;	
 	}
@@ -218,8 +218,8 @@ bool rayBoxIntersection(Ray ray, out Intersection inter){
 			inter.position = point;
 			inter.normal = vec3(-1.0, 0.0, 0.0);
 			//inter.color = vec3(0.6, 1.0, 0.0);
-			inter.color = vec3(0.6, 0.1, 0.97);
-			inter.reflectivity = 0.19;
+			inter.color = vec3(0.6, 1.0, 0.0);
+			inter.reflectivity = 0.1;
 
 			return true;	
 	}
@@ -233,8 +233,8 @@ bool rayBoxIntersection(Ray ray, out Intersection inter){
 			inter.dist = t;
 			inter.position = point;
 			inter.normal = vec3(0.0, 0.0, 1.0);
-			inter.color = vec3(0.85);
-			inter.reflectivity = 0.12;
+			inter.color = vec3(0.8);
+			inter.reflectivity = 0.1;
 			
 			return true;	
 	}
@@ -305,6 +305,43 @@ vec3 rayTrace(Ray first_ray){
 			// Osvetleni v bode pruseciku
 			bool shadow = calculCollision(light_ray, inter, true);
 			ray_color += (0.2 * color) + ((shadow? 0 : 1) * max(dot(light_dir, normal), 0.0) * color * 0.8);
+
+			// Neprime osvetleni
+			vec3 indirect = vec3(0.0);
+			seedInit();
+			for(int i = 0; i < 128; i++){
+				float rand1 = clampNumber(randXorshift());
+				float rand2 = clampNumber(randXorshift());
+				
+				vec3 refl_dir = randomDirection(rand1, rand2);
+				vec3 tang, bitang;
+				calcTB(normal, tang, bitang);
+				refl_dir = convertToBNT(refl_dir, normal, tang, bitang);
+
+				Ray reflected;
+				reflected.position = ray.position;
+				reflected.direction = refl_dir;
+
+				Intersection inters;
+				calculCollision(reflected, inters, false);
+				vec3 int_color = inters.color;
+				vec3 int_normal = inters.normal;
+
+				Ray to_light;
+				to_light.position = inters.position;
+				to_light.direction = normalize(light_pos - inters.position);
+
+				bool shd = calculCollision(to_light, inters, true);
+				indirect += (0.2 * int_color) + ((shd? 0 : 1) * max(dot(to_light.direction, int_normal), 0.0) * int_color * 0.8);
+			}
+
+			//indirect *= 0.55;
+
+			indirect /= 128;
+			ray_color += indirect;
+			//ray_color = (ray_color / PI + 2 * indirect) * inter.color;
+			
+			ray_color *= 0.77;
 
 			bounces += 1;
 		}
