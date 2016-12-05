@@ -272,6 +272,14 @@ bool calculCollision(Ray ray, out Intersection inter, bool shadow){
 //--------------------------------------------
 //--------------------------------------------
 
+/*vec3 rayTrace(Ray first_ray);
+
+void rec(){
+	Ray r;
+	r.position=r.direction=vec3(0);
+	rayTrace(r);
+}*/
+/*
 // Sledovani paprsku
 vec3 rayTrace(Ray first_ray){
 
@@ -303,19 +311,24 @@ vec3 rayTrace(Ray first_ray){
 			ray.position += 0.001 * ray.direction;
 
 			// Osvetleni v bode pruseciku
-			bool shadow = calculCollision(light_ray, inter, true);
+			Intersection inn;
+			bool shadow = calculCollision(light_ray, inn, true);
+			//bool shadow = false;
 			ray_color += (0.2 * color) + ((shadow? 0 : 1) * max(dot(light_dir, normal), 0.0) * color * 0.8);
 
 			// Neprime osvetleni
 			vec3 indirect = vec3(0.0);
-			seedInit();
-			for(int i = 0; i < 128; i++){
+			seed = gl_SampleID;
+			//seedInit();
+			vec3 tang, bitang;
+			calcTB(normal, tang, bitang);
+			float pdf = 1 / (2 * PI);
+			for(int i = 0; i < 70; i++){
 				float rand1 = clampNumber(randXorshift());
 				float rand2 = clampNumber(randXorshift());
 				
 				vec3 refl_dir = randomDirection(rand1, rand2);
-				vec3 tang, bitang;
-				calcTB(normal, tang, bitang);
+				
 				refl_dir = convertToBNT(refl_dir, normal, tang, bitang);
 
 				Ray reflected;
@@ -332,16 +345,20 @@ vec3 rayTrace(Ray first_ray){
 				to_light.direction = normalize(light_pos - inters.position);
 
 				bool shd = calculCollision(to_light, inters, true);
+				//bool shd = false;
 				indirect += (0.2 * int_color) + ((shd? 0 : 1) * max(dot(to_light.direction, int_normal), 0.0) * int_color * 0.8);
+				indirect /= pdf;
 			}
 
 			//indirect *= 0.55;
 
-			indirect /= 128;
-			ray_color += indirect;
-			//ray_color = (ray_color / PI + 2 * indirect) * inter.color;
-			
-			ray_color *= 0.77;
+			indirect /= 70;
+			//ray_color += indirect * (inter.color / PI);
+			//ray_color = ray_color ;
+			ray_color = (ray_color / PI + 2 * indirect) * inter.color;
+			//ray_color *= 0.77;
+
+			//rec();
 
 			bounces += 1;
 		}
@@ -350,6 +367,91 @@ vec3 rayTrace(Ray first_ray){
 			bounces = MAX_BOUNCES;
 		}
 	}
+
+	return ray_color;
+}*/
+
+int SPP = 70;
+
+vec3 directLight(vec3 position, vec3 normal, vec3 color){
+  vec3 direct = vec3(0.0);
+  vec3 light_dir = normalize(light_pos - position);
+
+  Ray light_ray;
+  light_ray.position = position;
+  light_ray.direction = light_dir;
+
+  Intersection inter;
+  bool shadow = calculCollision(light_ray, inter, true);
+  direct = (ambient * color) + ((shadow? 0 : 1) * max(dot(light_dir, normal), 0.0) * color * diffuse);
+
+  return direct;
+}
+
+
+vec3 indirectLight(vec3 position, vec3 normal, out vec3 collision, out vec3 coll_normal){
+  vec3 indirect = vec3(0.0);
+
+  vec3 tang, bitang;
+  calcTB(normal, tang, bitang);
+  float pdf = 1 / (2 * PI);
+
+  float rand1 = clampNumber(randXorshift());
+  float rand2 = clampNumber(randXorshift());
+
+  vec3 refl_dir = randomDirection(rand1, rand2);
+  refl_dir = convertToBNT(refl_dir, normal, tang, bitang);
+
+  Ray reflected;
+  reflected.position = position;
+  reflected.direction = refl_dir;
+
+  Intersection inters;
+  calculCollision(reflected, inters, false);
+  vec3 int_color = inters.color;
+  vec3 int_normal = inters.normal;
+
+  collision = inters.position;
+  coll_normal = inters.normal;
+
+  indirect += directLight(inters.position, inters.normal, inters.color);
+  indirect = indirect / pdf * rand1 ;
+
+  return indirect;
+}
+
+
+
+vec3 rayTrace(Ray first_ray){
+
+	vec3 ray_color = vec3(0.0);
+	float coef = 1.0;
+	Intersection inter;
+	int bounces = 0;
+	Ray ray = first_ray;
+
+		if(calculCollision(ray, inter, false)){
+			if(light_source) return vec3(1.0);
+
+			color = color * coef * (1.0 - inter.reflectivity);
+			coef *= inter.reflectivity;
+
+			ray_color += directLight(inter.position, inter.normal, inter.color);
+
+			vec3 indirect_color = vec3(0.0);
+			vec3 in_pos = inter.position, in_norm = inter.normal, out_pos, out_norm;
+			seed = gl_SampleID;
+			for(int i = 0; i < SPP; i++){
+				indirect_color += indirectLight(in_pos, in_norm, out_pos, out_norm);
+			}
+			indirect_color /= SPP;
+			ray_color = (ray_color / PI + 2 * indirect_color) * inter.color;
+			//ray_color = ray_color + indirect_color * 0.56;
+		}
+
+		else{
+			bounces = MAX_BOUNCES;
+		}
 
 	return ray_color;
 }
