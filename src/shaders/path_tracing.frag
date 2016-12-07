@@ -272,7 +272,7 @@ bool calculCollision(Ray ray, out Intersection inter, bool shadow){
 //--------------------------------------------
 //--------------------------------------------
 
-int SPP = 6;
+int SPP = 4;
 
 vec3 directLight(vec3 position, vec3 normal, vec3 color){
   vec3 direct = vec3(0.0);
