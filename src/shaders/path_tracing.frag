@@ -315,6 +315,7 @@ bool calculCollision(Ray ray, out Intersection inter, bool shadow){
 //--------------------------------------------
 //--------------------------------------------
 
+<<<<<<< HEAD
 bool in_light(vec3 pos){
 	if(pos.y == UP){
 		if(pos.z > -0.37 && pos.z < -0.07 && pos.x > -0.17 && pos.x < 0.17)
@@ -326,6 +327,9 @@ bool in_light(vec3 pos){
 
 int SPP = 0;
 vec3 sampl;
+=======
+int SPP = 4;
+>>>>>>> origin/master
 
 vec3 directLight(vec3 position, vec3 normal, vec3 color){
   vec3 direct = vec3(0.0);
