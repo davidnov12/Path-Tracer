@@ -31,7 +31,7 @@ void Render::setUniforms(){
 	glUniform3f(glGetUniformLocation(program->getProgram(), "light_pos"), scene->getLight().x, scene->getLight().y, scene->getLight().z);
 
 	// Kamera
-	glUniform3f(glGetUniformLocation(program->getProgram(), "view_pos"), camera->getPosition().x, camera->getPosition().y, camera->getPosition().z);
+	//glUniform3f(glGetUniformLocation(program->getProgram(), "view_pos"), camera->getPosition().x, camera->getPosition().y, camera->getPosition().z);
 
 	// Inverzni VP matice
 	//mat4 view = lookAt(vec3(0), vec3(0, 0, 1), vec3(0, 1, 0));
@@ -48,6 +48,15 @@ void Render::setUniforms(){
 	glUniform3f(glGetUniformLocation(program->getProgram(), "spheres[1].color"), scene->getSpheres().at(1).getColor().r, scene->getSpheres().at(1).getColor().g, scene->getSpheres().at(1).getColor().b);
 	glUniform1f(glGetUniformLocation(program->getProgram(), "spheres[1].radius"), scene->getSpheres().at(1).getRadius());
 	glUniform1f(glGetUniformLocation(program->getProgram(), "spheres[1].reflectivity"), scene->getSpheres().at(1).getProbability());
+
+	/*for (int i = 0; i < 2000; i++) {
+		string s = "randoms[" + to_string(i) + "]";
+		glUniform1f(glGetUniformLocation(program->getProgram(), s.c_str()), .0);
+	}*/
+}
+
+void Render::cameraMove(float x, float y) {
+	glUniform3f(glGetUniformLocation(program->getProgram(), "view_pos"), (camera->getPosition().x) + x, (camera->getPosition().y) + y, camera->getPosition().z);
 }
 
 void Render::draw(){

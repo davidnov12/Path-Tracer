@@ -11,6 +11,7 @@
 
 #include <GL/glew.h>
 #include <glm/glm.hpp>
+#include <random>
 #include "Shader.h"
 #include "Scene.h"
 #include "Camera.h"
@@ -26,6 +27,9 @@ public:
 
 	// Nastaveni uniformnich promennych v shaderech
 	void setUniforms();
+
+	// Pohyb kamery
+	void cameraMove(float x, float y);
 
 	// Kresleni sceny
 	void draw();

@@ -9,6 +9,66 @@
 
 #include "Window.h"
 
+float x_off, y_off;
+float lastX, lastY;
+bool firstMouse = true, pressed;
+
+#define CAMERA_OFFSET 0.05
+
+void cameraMove(GLFWwindow* window, int key, int scancode, int action, int mode) {
+	if (key == GLFW_KEY_W && action == GLFW_PRESS)
+		y_off += CAMERA_OFFSET;
+	if (key == GLFW_KEY_A && action == GLFW_PRESS)
+		x_off -= CAMERA_OFFSET;
+	if (key == GLFW_KEY_S && action == GLFW_PRESS)
+		y_off -= CAMERA_OFFSET;
+	if (key == GLFW_KEY_D && action == GLFW_PRESS)
+		x_off += CAMERA_OFFSET;
+	
+	if (x_off > 0.55) x_off = 0.55;
+	if (x_off < -0.55) x_off = -0.55;
+	
+	if (y_off > 0.45) y_off = 0.45;
+	if (y_off < -0.25) y_off = -0.25;
+}
+
+// Pohyb mysi
+void mouse(GLFWwindow* window, double xpos, double ypos) {
+
+	if (pressed) {
+		if (firstMouse)
+		{
+			lastX = xpos;
+			lastY = ypos;
+			firstMouse = false;
+		}
+
+		x_off -= 0.002*(xpos - lastX);
+		y_off -= 0.002*(lastY - ypos);
+
+		lastX = xpos;
+		lastY = ypos;
+
+	}
+
+	lastX = xpos;
+	lastY = ypos;
+
+	if (x_off > 0.55) x_off = 0.55;
+	if (x_off < -0.55) x_off = -0.55;
+
+	if (y_off > 0.45) y_off = 0.45;
+	if (y_off < -0.25) y_off = -0.25;
+}
+
+// Stisknuti mysi
+void press(GLFWwindow* window, int button, int action, int mods) {
+
+	if (action == GLFW_PRESS) pressed = true;
+	else pressed = false;
+}
+
+
 Window::Window(int width, int height, string title){
 	this->width = width;
 	this->height = height;
@@ -29,6 +89,14 @@ bool Window::getCloseState(){
 	
 	glfwPollEvents();
 	return false;
+}
+
+float Window::getXOffset() {
+	return x_off;
+}
+
+float Window::getYOffset() {
+	return y_off;
 }
 
 void Window::swapBuffers(){
@@ -64,6 +132,10 @@ GLFWwindow * Window::createWindow(){
 
 	// Vytvoreni kontextu pro okno
 	glfwMakeContextCurrent(window);
+
+	glfwSetKeyCallback(window, cameraMove);
+	glfwSetMouseButtonCallback(window, press);
+	glfwSetCursorPosCallback(window, mouse);
 
 	// Inicializace GLEW
 	glewExperimental = GL_TRUE;

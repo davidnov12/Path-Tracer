@@ -22,14 +22,14 @@ int main() {
 	Window window(WIDTH, HEIGHT, "PathTracing");
 	Shader path;
 	Camera camera(vec3(0.0, 0.0, 2.0), WIDTH, HEIGHT);
-	Scene cornell(vec3(0.0, 0.52, 0.0));
+	Scene cornell(vec3(0.0, 0.49, -0.2));
 	Render tracer(&path, &cornell, &camera);
 	FPSMeter fps;
 
 
 	// Vyplneni sceny
-	Sphere s(0.037, vec3(-0.15, -0.2777, -0.45), vec3(0.6, 1.0, 0.0), 0.1);
-	Sphere p(0.06, vec3(0.2, -0.2777, -0.12), vec3(0.6, 1.0, 0.0), 0.0);
+	Sphere s(0.037, vec3(-0.15, -0.31, -0.45), vec3(0.9, 0.9, 0.9), 0.1);
+	Sphere p(0.06, vec3(0.32, -0.2777, -0.12), vec3(0.9, 0.9, 0.9), 0.0);
 	cornell.addSphere(s);
 	cornell.addSphere(p);
 
@@ -52,6 +52,7 @@ int main() {
 			fps.reinit(glfwGetTime());
 		}
 
+		tracer.cameraMove(window.getXOffset(), window.getYOffset());
 		tracer.draw();
 
 		window.swapBuffers();

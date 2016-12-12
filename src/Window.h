@@ -37,6 +37,9 @@ public:
 	// Nastaveni titulku okna
 	void setTitle(string title);
 
+	float getXOffset();
+	float getYOffset();
+
 private:
 
 	// Atributy okna
