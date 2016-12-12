@@ -13,6 +13,7 @@ W,A,S,D or mouse
 ## Project progress
 
 Implemented Ray Tracing method.
+
 Implemented Indirect illumination.
 
 <b>In progress:</b> Trace Path of Ray.
