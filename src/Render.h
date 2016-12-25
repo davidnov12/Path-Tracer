@@ -29,7 +29,13 @@ public:
 	void setUniforms();
 
 	// Pohyb kamery
-	void cameraMove(float x, float y);
+	void cameraMove(float x, float y, float lx, float lz);
+
+	// Priprava kreslici textury
+	void setTextureFramebuffer();
+
+	// Zmena kroku vykreslovani vzorku
+	void setStride(int newStride);
 
 	// Kresleni sceny
 	void draw();
@@ -44,9 +50,14 @@ private:
 
 	// VAO, VBO
 	GLuint vao, vbo;
+	GLuint screen, frame;
+
+	GLfloat id = 1.0, stride = 1.0, step = 1.0;
+	GLfloat last_x = 0, last_y = 0;
 
 	// Shader program pro vykreslovani
 	Shader* program;
+	Shader display;
 
 	// Scena k vykresleni
 	Scene* scene;

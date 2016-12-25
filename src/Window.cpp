@@ -10,10 +10,12 @@
 #include "Window.h"
 
 float x_off, y_off;
+float lx_off, lz_off;
 float lastX, lastY;
 bool firstMouse = true, pressed;
 
 #define CAMERA_OFFSET 0.05
+#define LIGHT_OFFSET 0.07
 
 void cameraMove(GLFWwindow* window, int key, int scancode, int action, int mode) {
 	if (key == GLFW_KEY_W && action == GLFW_PRESS)
@@ -24,12 +26,27 @@ void cameraMove(GLFWwindow* window, int key, int scancode, int action, int mode)
 		y_off -= CAMERA_OFFSET;
 	if (key == GLFW_KEY_D && action == GLFW_PRESS)
 		x_off += CAMERA_OFFSET;
+
+	if (key == GLFW_KEY_I && action == GLFW_PRESS)
+		lz_off += LIGHT_OFFSET;
+	if (key == GLFW_KEY_J && action == GLFW_PRESS)
+		lx_off -= LIGHT_OFFSET;
+	if (key == GLFW_KEY_K && action == GLFW_PRESS)
+		lz_off -= LIGHT_OFFSET;
+	if (key == GLFW_KEY_L && action == GLFW_PRESS)
+		lx_off += LIGHT_OFFSET;
 	
 	if (x_off > 0.55) x_off = 0.55;
 	if (x_off < -0.55) x_off = -0.55;
 	
 	if (y_off > 0.45) y_off = 0.45;
 	if (y_off < -0.25) y_off = -0.25;
+
+	if (lx_off > 0.35) lx_off = 0.35;
+	if (lx_off < -0.35) lx_off = -0.35;
+
+	if (lz_off > 0.35) lz_off = 0.15;
+	if (lz_off < -0.35) lz_off = -0.65;
 }
 
 // Pohyb mysi
@@ -49,6 +66,7 @@ void mouse(GLFWwindow* window, double xpos, double ypos) {
 		lastX = xpos;
 		lastY = ypos;
 
+		//cout << "Event\n";
 	}
 
 	lastX = xpos;
@@ -59,6 +77,8 @@ void mouse(GLFWwindow* window, double xpos, double ypos) {
 
 	if (y_off > 0.45) y_off = 0.45;
 	if (y_off < -0.25) y_off = -0.25;
+
+	
 }
 
 // Stisknuti mysi
@@ -97,6 +117,14 @@ float Window::getXOffset() {
 
 float Window::getYOffset() {
 	return y_off;
+}
+
+float Window::getLXOffset(){
+	return lx_off;
+}
+
+float Window::getLZOffset(){
+	return lz_off;
 }
 
 void Window::swapBuffers(){
@@ -149,6 +177,8 @@ GLFWwindow * Window::createWindow(){
 	glViewport(0, 0, w, h);
 
 	glEnable(GL_MULTISAMPLE);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	//glEnable(GL_DEPTH_TEST);
 
 	return window;

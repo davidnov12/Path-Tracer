@@ -40,6 +40,9 @@ public:
 	float getXOffset();
 	float getYOffset();
 
+	float getLXOffset();
+	float getLZOffset();
+
 private:
 
 	// Atributy okna
