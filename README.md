@@ -14,12 +14,12 @@ W,A,S,D or mouse
 
 Implemented Ray Tracing method.
 
-Implemented Indirect illumination.
+Implemented Path Tracing method.
 
-<b>In progress:</b> Trace Path of Ray.
+<b>In progress:</b> Model support.
 
 ## Example
 
-![Cornell Box](example/indirect.png?raw=true "Cornell Box")
+![Cornell Box](example/pathtracer.png?raw=true "Cornell Box")
 
 Cornell Box
