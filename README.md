@@ -20,6 +20,6 @@ Implemented Path Tracing method.
 
 ## Example
 
-![Cornell Box](example/pathtracer.png?raw=true "Cornell Box")
+![Cornell Box](example/pathtracing_vg_gy.png?raw=true "Cornell Box")
 
 Cornell Box
