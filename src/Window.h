@@ -20,7 +20,7 @@ class Window {
 public:
 
 	// Konstruktor
-	Window(int width, int height, string title);
+	Window(int width, int height, string title, bool visible);
 
 	// Uzavreni okna
 	void closeWindow();
@@ -48,6 +48,7 @@ private:
 	// Atributy okna
 	int width, height;
 	string title;
+	bool visible;
 
 	// Okno
 	GLFWwindow* window;

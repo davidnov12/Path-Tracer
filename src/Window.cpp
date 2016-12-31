@@ -89,10 +89,11 @@ void press(GLFWwindow* window, int button, int action, int mods) {
 }
 
 
-Window::Window(int width, int height, string title){
+Window::Window(int width, int height, string title, bool visible){
 	this->width = width;
 	this->height = height;
 	this->title = title;
+	this->visible = visible;
 	window = createWindow();
 }
 
@@ -146,6 +147,8 @@ GLFWwindow * Window::createWindow(){
 	// Atributy okna
 	glfwWindowHint(GLFW_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_VERSION_MINOR, 2);
+	glfwWindowHint(GLFW_VISIBLE, GL_TRUE);
+	if(!visible) glfwWindowHint(GLFW_VISIBLE, GL_FALSE);
 	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 	glfwWindowHint(GLFW_SAMPLES, 16);
 
