@@ -16,7 +16,7 @@ Implemented Ray Tracing method.
 
 Implemented Path Tracing method.
 
-<b>In progress:</b> Model support.
+<b>To do:</b> Model support, Soft shadows, Materials, Acceleration by Octree
 
 ## Example
 
