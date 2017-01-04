@@ -87,6 +87,9 @@ void Render::setTextureFramebuffer(){
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+float Render::getID(){
+	return id;
+}
 
 void Render::setStride(int newStride){
 	stride = newStride;
@@ -96,7 +99,7 @@ void Render::setStride(int newStride){
 
 void Render::draw(){
 
-	cout << id << "samples" << endl;
+	//cout << id << "samples" << endl;
 	
 	std::random_device rd;
 	std::mt19937 gen(rd());
@@ -116,7 +119,6 @@ void Render::draw(){
 		id = 0.0;
 		step = stride;
 		glClear(GL_COLOR_BUFFER_BIT);
-		system("pause");
 	}
 
 	// Nastaveni programu
