@@ -53,7 +53,7 @@ int main() {
 		
 		// mereni FPS
 		if (fps.checkFPS(glfwGetTime())) {
-			string title = "Path Tracing   (" + to_string((int)fps.getFPS()) + " FPS)";
+			string title = "Path Tracing   (" + to_string((int)fps.getFPS()) + " FPS)  (" + to_string((int) tracer.getID()) + " samples)";
 			window.setTitle(title);
 			fps.reinit(glfwGetTime());
 		}
