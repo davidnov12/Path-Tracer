@@ -20,7 +20,7 @@
 
 
 int main() {
-	Window window(WIDTH, HEIGHT, "Path Tracing");
+	Window window(WIDTH, HEIGHT, "Path Tracing", true);
 	Shader path;
 	Camera camera(vec3(0.0, 0.0, 2.0), WIDTH, HEIGHT);
 	Scene cornell(vec3(0.0, 0.49, -0.2));
