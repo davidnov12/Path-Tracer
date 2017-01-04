@@ -1,12 +1,3 @@
-/*
- * Path tracing na GPU
- * Bakalarska prace
- * David Novak, xnovak1l
- * FIT VUT Brno, 2016
- *
- * path_tracing.vert - Vertex Shader (souradnice prumetny)
- */
-
 #version 450
 
 layout (location = 0) in vec3 pos;
