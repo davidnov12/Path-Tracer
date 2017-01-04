@@ -24,7 +24,7 @@ Render::Render(Shader* program, Scene* scene, Camera* cam){
 	screenCoords[5] = vec3(-1.0, 1.0, -1.0);
 
 	createBuffers();
-	setTextureFramebuffer();
+	//setTextureFramebuffer();
 }
 
 void Render::setUniforms(){
