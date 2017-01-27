@@ -34,6 +34,9 @@ public:
 	// Priprava kreslici textury
 	void setTextureFramebuffer();
 
+	// Pocet vykreslenych snimku
+	float getID();
+
 	// Zmena kroku vykreslovani vzorku
 	void setStride(int newStride);
 

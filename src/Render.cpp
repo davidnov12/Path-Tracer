@@ -34,22 +34,6 @@ Render::Render(Shader* program, Scene* scene, Camera* cam){
 }
 
 void Render::setUniforms(){
-	// Svetlo sceny
-	//glUniform3f(glGetUniformLocation(program->getProgram(), "light_pos"), scene->getLight().x, scene->getLight().y, scene->getLight().z);
-
-	// Kamera
-	//glUniform3f(glGetUniformLocation(program->getProgram(), "view_pos"), camera->getPosition().x, camera->getPosition().y, camera->getPosition().z);
-
-	// Inverzni VP matice
-	//mat4 view = lookAt(vec3(0), vec3(0, 0, 1), vec3(0, 1, 0));
-	//mat4 inv_viewproj = inverse(camera->getProjMat() * camera->getViewMat());
-	//glUniformMatrix4fv(glGetUniformLocation(program->getProgram(), "inv_viewproj"), 1, GL_FALSE, value_ptr(inv_viewproj));
-	
-	//glUniform1d(glGetUniformLocation(program->getProgram(), "sample_ID"), 0);
-	//glUniform1d(glGetUniformLocation(program->getProgram(), "stride"), 1);
-
-	// Nahodna cisla pro Path Tracing
-	
 
 	// Objekty sceny
 	for (int i = 0; i < scene->getSpheres().size(); i++) {
@@ -62,16 +46,16 @@ void Render::setUniforms(){
 		s = "spheres[" + to_string(i) + "].reflectivity";
 		glUniform1f(glGetUniformLocation(program->getProgram(), s.c_str()), scene->getSpheres().at(i).getProbability());
 	}
-	/*glUniform3f(glGetUniformLocation(program->getProgram(), "spheres[1].center"), scene->getSpheres().at(1).getCenter().x, scene->getSpheres().at(1).getCenter().y, scene->getSpheres().at(1).getCenter().z);
-	glUniform3f(glGetUniformLocation(program->getProgram(), "spheres[1].color"), scene->getSpheres().at(1).getColor().r, scene->getSpheres().at(1).getColor().g, scene->getSpheres().at(1).getColor().b);
-	glUniform1f(glGetUniformLocation(program->getProgram(), "spheres[1].radius"), scene->getSpheres().at(1).getRadius());
-	glUniform1f(glGetUniformLocation(program->getProgram(), "spheres[1].reflectivity"), scene->getSpheres().at(1).getProbability());
-	*/
 }
 
+<<<<<<< HEAD
 void Render::cameraMove(float x, float y, float lx, float lz, bool resized, bool light_move, bool algorithm) {
 	
 	if (x != last_x || y != last_y || resized || light_move || algorithm != currentAlgorithm) {
+=======
+void Render::cameraMove(float x, float y, float lx, float lz) {
+	if (x != last_x || y != last_y) {
+>>>>>>> origin/master
 		glClear(GL_COLOR_BUFFER_BIT);
 		id = 1.0;
 		step = stride;
@@ -108,6 +92,9 @@ void Render::setTextureFramebuffer(){
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+float Render::getID(){
+	return id;
+}
 
 void Render::setStride(int newStride){
 	stride = newStride;
@@ -118,9 +105,19 @@ float Render::getSamples(){
 }
 
 
+<<<<<<< HEAD
 void Render::draw(float w, float h){
 	//cout << id << " " << step << endl;
 	
+=======
+void Render::draw(){
+
+	//cout << id << "samples" << endl;
+	
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_real_distribution<> uniGen(0, 1);
+>>>>>>> origin/master
 	for (int i = 0; i < 100; i++) {
 		string s = "randoms[" + to_string(i) + "]";
 		glUniform1f(glGetUniformLocation(program->getProgram(), s.c_str()), uniGen(gen));
@@ -135,11 +132,18 @@ void Render::draw(float w, float h){
 	id += stride;
 	step += stride;
 
+<<<<<<< HEAD
 	if ((id - stride) >= 5000.0) {
 		id = 0.0;
 		step = stride;
 		glClear(GL_COLOR_BUFFER_BIT);
 		//system("pause");
+=======
+	if ((id - stride) >= 10000.0) {
+		id = 0.0;
+		step = stride;
+		glClear(GL_COLOR_BUFFER_BIT);
+>>>>>>> origin/master
 	}
 
 	// Nastaveni programu

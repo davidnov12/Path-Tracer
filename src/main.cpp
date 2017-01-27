@@ -42,7 +42,11 @@ void thr(void* param) {
 
 
 int main() {
+<<<<<<< HEAD
 	Window window(DEFAULT_WIDTH, DEFAULT_HEIGHT, "Path Tracing", true);
+=======
+	Window window(WIDTH, HEIGHT, "Path Tracing", true);
+>>>>>>> origin/master
 	Shader path;
 	Camera camera(vec3(0.0, 0.0, 2.0), DEFAULT_WIDTH, DEFAULT_HEIGHT);
 	Scene cornell(vec3(0.0, 0.7, -0.2));
@@ -91,9 +95,13 @@ int main() {
 		
 		// mereni FPS
 		if (fps.checkFPS(glfwGetTime())) {
+<<<<<<< HEAD
 			string alg = " Backward PT";
 			if (window.algorithm()) alg = " Bidirectional PT";
 			string title = "Path Tracing   (" + to_string((int)fps.getFPS()) + " FPS) (" + to_string((int) tracer.getSamples()) + " samples)" + alg;
+=======
+			string title = "Path Tracing   (" + to_string((int)fps.getFPS()) + " FPS)  (" + to_string((int) tracer.getID()) + " samples)";
+>>>>>>> origin/master
 			window.setTitle(title);
 			fps.reinit(glfwGetTime());
 		}
