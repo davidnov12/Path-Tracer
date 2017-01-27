@@ -1,14 +1,20 @@
 /*
-* Path tracing na GPU
-* Bakalarska prace
-* David Novak, xnovak1l
-* FIT VUT Brno, 2016
-*
-* Render.cpp - trida rendereru
-*/
+ * Path tracing na GPU
+ * Bakalarska prace
+ * David Novak, xnovak1l
+ * FIT VUT Brno, 2016
+ *
+ * Render.cpp - trida rendereru
+ */
 
 #include "Render.h"
 
+
+std::random_device rd;
+std::mt19937 gen(rd());
+std::uniform_real_distribution<> uniGen(0, 1);
+
+bool currentAlgorithm = false;
 
 Render::Render(Shader* program, Scene* scene, Camera* cam){
 	this->program = program;
@@ -24,7 +30,7 @@ Render::Render(Shader* program, Scene* scene, Camera* cam){
 	screenCoords[5] = vec3(-1.0, 1.0, -1.0);
 
 	createBuffers();
-	setTextureFramebuffer();
+	//setTextureFramebuffer();
 }
 
 void Render::setUniforms(){
@@ -63,15 +69,17 @@ void Render::setUniforms(){
 	*/
 }
 
-void Render::cameraMove(float x, float y, float lx, float lz) {
-	cout << id << " " << step << endl;
-	if (x != last_x || y != last_y) {
+void Render::cameraMove(float x, float y, float lx, float lz, bool resized, bool light_move, bool algorithm) {
+	
+	if (x != last_x || y != last_y || resized || light_move || algorithm != currentAlgorithm) {
 		glClear(GL_COLOR_BUFFER_BIT);
 		id = 1.0;
 		step = stride;
 		last_x = x;
 		last_y = y;
+		currentAlgorithm = algorithm;
 	}
+	glUniform1i(glGetUniformLocation(program->getProgram(), "bidirectional"), (int) algorithm);
 	glUniform3f(glGetUniformLocation(program->getProgram(), "view_pos"), (camera->getPosition().x) + x, (camera->getPosition().y) + y, camera->getPosition().z);
 	glUniform3f(glGetUniformLocation(program->getProgram(), "light_pos"), (scene->getLight().x) + lx, scene->getLight().y, (scene->getLight().z) + lz);
 }
@@ -94,18 +102,9 @@ void Render::setTextureFramebuffer(){
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	// Framebuffer pro vykreslovani
-	glGenFramebuffersEXT(1, &frame);
-	glBindFramebufferEXT(GL_FRAMEBUFFER, frame);
-
-	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, screen, 0);
-
-	/*GLuint rbo;
-	glGenRenderbuffers(1, &rbo);
-	glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 600, 600); // Use a single renderbuffer object for both a depth AND stencil buffer.
-	glBindRenderbuffer(GL_RENDERBUFFER, 0);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);*/
-
+	glGenFramebuffers(1, &frame);
+	glBindFramebuffer(GL_FRAMEBUFFER, frame);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, screen, 0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
@@ -114,13 +113,14 @@ void Render::setStride(int newStride){
 	stride = newStride;
 }
 
+float Render::getSamples(){
+	return id;
+}
 
 
-void Render::draw(){
-
-	std::random_device rd;
-	std::mt19937 gen(rd());
-	std::uniform_real_distribution<> uniGen(0, 1);
+void Render::draw(float w, float h){
+	//cout << id << " " << step << endl;
+	
 	for (int i = 0; i < 100; i++) {
 		string s = "randoms[" + to_string(i) + "]";
 		glUniform1f(glGetUniformLocation(program->getProgram(), s.c_str()), uniGen(gen));
@@ -129,14 +129,17 @@ void Render::draw(){
 	glUniform1f(glGetUniformLocation(program->getProgram(), "sample_ID"), id);
 	glUniform1f(glGetUniformLocation(program->getProgram(), "stride"), step);
 
+	glUniform1f(glGetUniformLocation(program->getProgram(), "width"), w);
+	glUniform1f(glGetUniformLocation(program->getProgram(), "height"), h);
+
 	id += stride;
 	step += stride;
 
-	if ((id - stride) >= 700.0) {
+	if ((id - stride) >= 5000.0) {
 		id = 0.0;
 		step = stride;
 		glClear(GL_COLOR_BUFFER_BIT);
-		system("pause");
+		//system("pause");
 	}
 
 	// Nastaveni programu
@@ -144,9 +147,17 @@ void Render::draw(){
 
 	setUniforms();
 	
+	//glBindFramebuffer(GL_FRAMEBUFFER, frame);
 	glBindVertexArray(vao);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
+	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	//display.useProgram();
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, screen);
+	
+	//glDrawArrays(GL_POINTS, 0, 1);
 	
 
 }

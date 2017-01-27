@@ -38,10 +38,13 @@
     <ClCompile Include="..\src\Sphere.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\Triangle.cpp">
+    <ClCompile Include="..\src\Window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\Window.cpp">
+    <ClCompile Include="..\src\ModelLoader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Triangle.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -70,12 +73,27 @@
     <ClInclude Include="..\src\Window.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\FPSMeter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ModelLoader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\src\shaders\path_tracing.frag">
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\src\shaders\path_tracing.vert">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\src\shaders\display.vert">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\src\shaders\display.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\src\shaders\display.geom">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

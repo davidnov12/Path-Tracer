@@ -1,11 +1,11 @@
 /*
-* Path tracing na GPU
-* Bakalarska prace
-* David Novak, xnovak1l
-* FIT VUT Brno, 2016
-*
-* Window.h - trida pro spravu okna
-*/
+ * Path tracing na GPU
+ * Bakalarska prace
+ * David Novak, xnovak1l
+ * FIT VUT Brno, 2016
+ *
+ * Window.h - trida pro spravu okna
+ */
 
 #pragma once
 
@@ -37,11 +37,22 @@ public:
 	// Nastaveni titulku okna
 	void setTitle(string title);
 
+	// Pozice kamery
 	float getXOffset();
 	float getYOffset();
 
+	// Pozice svetla
 	float getLXOffset();
 	float getLZOffset();
+
+	// Soucasna vyska a sirka okna
+	float getCurrentWidth();
+	float getCurrentHeight();
+
+	// Vlastnosti sceny a okna
+	bool isResized();
+	bool lightMove();
+	bool algorithm();
 
 private:
 

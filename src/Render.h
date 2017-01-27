@@ -1,11 +1,11 @@
 /*
-* Path tracing na GPU
-* Bakalarska prace
-* David Novak, xnovak1l
-* FIT VUT Brno, 2016
-*
-* Render.h - trida rendereru
-*/
+ * Path tracing na GPU
+ * Bakalarska prace
+ * David Novak, xnovak1l
+ * FIT VUT Brno, 2016
+ *
+ * Render.h - trida rendereru
+ */
 
 #pragma once
 
@@ -29,7 +29,7 @@ public:
 	void setUniforms();
 
 	// Pohyb kamery
-	void cameraMove(float x, float y, float lx, float lz);
+	void cameraMove(float x, float y, float lx, float lz, bool resized, bool light_move, bool algorithm);
 
 	// Priprava kreslici textury
 	void setTextureFramebuffer();
@@ -37,8 +37,11 @@ public:
 	// Zmena kroku vykreslovani vzorku
 	void setStride(int newStride);
 
+	// Pocet vykreslenych vzorku
+	float getSamples();
+
 	// Kresleni sceny
-	void draw();
+	void draw(float w, float h);
 
 	// Uvolneni dat
 	void finish();
@@ -52,6 +55,7 @@ private:
 	GLuint vao, vbo;
 	GLuint screen, frame;
 
+	// Vzorky pro PT
 	GLfloat id = 1.0, stride = 1.0, step = 1.0;
 	GLfloat last_x = 0, last_y = 0;
 
@@ -62,7 +66,7 @@ private:
 	// Scena k vykresleni
 	Scene* scene;
 
-	// kamery
+	// Kamera
 	Camera* camera;
 
 	// Vytvoreni VAO a VBO

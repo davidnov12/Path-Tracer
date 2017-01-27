@@ -1,11 +1,11 @@
 /*
-* Path tracing na GPU
-* Bakalarska prace
-* David Novak, xnovak1l
-* FIT VUT Brno, 2016
-*
-* Shader.cpp - trida pro praci se shader programem
-*/
+ * Path tracing na GPU
+ * Bakalarska prace
+ * David Novak, xnovak1l
+ * FIT VUT Brno, 2016
+ *
+ * Shader.cpp - trida pro praci se shader programem
+ */
 
 #include "Shader.h"
 #include <stdlib.h>

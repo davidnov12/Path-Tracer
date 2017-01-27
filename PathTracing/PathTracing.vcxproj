@@ -140,6 +140,7 @@
     <ClCompile Include="..\src\FPSMeter.cpp" />
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\Model.cpp" />
+    <ClCompile Include="..\src\ModelLoader.cpp" />
     <ClCompile Include="..\src\Render.cpp" />
     <ClCompile Include="..\src\Scene.cpp" />
     <ClCompile Include="..\src\Shader.cpp" />
@@ -149,7 +150,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\Camera.h" />
+    <ClInclude Include="..\src\FPSMeter.h" />
     <ClInclude Include="..\src\Model.h" />
+    <ClInclude Include="..\src\ModelLoader.h" />
     <ClInclude Include="..\src\Render.h" />
     <ClInclude Include="..\src\Scene.h" />
     <ClInclude Include="..\src\Shader.h" />
@@ -158,6 +161,9 @@
     <ClInclude Include="..\src\Window.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\src\shaders\display.frag" />
+    <None Include="..\src\shaders\display.geom" />
+    <None Include="..\src\shaders\display.vert" />
     <None Include="..\src\shaders\path_tracing.frag" />
     <None Include="..\src\shaders\path_tracing.vert" />
   </ItemGroup>

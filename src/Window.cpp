@@ -1,18 +1,19 @@
 /*
-* Path tracing na GPU
-* Bakalarska prace
-* David Novak, xnovak1l
-* FIT VUT Brno, 2016
-*
-* Window.cpp - trida pro spravu okna
-*/
+ * Path tracing na GPU
+ * Bakalarska prace
+ * David Novak, xnovak1l
+ * FIT VUT Brno, 2016
+ *
+ * Window.cpp - trida pro spravu okna
+ */
 
 #include "Window.h"
 
 float x_off, y_off;
 float lx_off, lz_off;
 float lastX, lastY;
-bool firstMouse = true, pressed;
+float rWidth, rHeight;
+bool firstMouse = true, pressed, resized, bidirectional, light_move;
 
 #define CAMERA_OFFSET 0.05
 #define LIGHT_OFFSET 0.07
@@ -27,14 +28,24 @@ void cameraMove(GLFWwindow* window, int key, int scancode, int action, int mode)
 	if (key == GLFW_KEY_D && action == GLFW_PRESS)
 		x_off += CAMERA_OFFSET;
 
-	if (key == GLFW_KEY_I && action == GLFW_PRESS)
+	if (key == GLFW_KEY_I && action == GLFW_PRESS) {
 		lz_off += LIGHT_OFFSET;
-	if (key == GLFW_KEY_J && action == GLFW_PRESS)
+		light_move = true;
+	}
+	if (key == GLFW_KEY_J && action == GLFW_PRESS) {
 		lx_off -= LIGHT_OFFSET;
-	if (key == GLFW_KEY_K && action == GLFW_PRESS)
+		light_move = true;
+	}
+	if (key == GLFW_KEY_K && action == GLFW_PRESS){
 		lz_off -= LIGHT_OFFSET;
-	if (key == GLFW_KEY_L && action == GLFW_PRESS)
+		light_move = true;
+	}
+	if (key == GLFW_KEY_L && action == GLFW_PRESS){
 		lx_off += LIGHT_OFFSET;
+		light_move = true;
+	}
+	if (key == GLFW_KEY_B && action == GLFW_PRESS)
+		bidirectional = !bidirectional;
 	
 	if (x_off > 0.55) x_off = 0.55;
 	if (x_off < -0.55) x_off = -0.55;
@@ -46,7 +57,9 @@ void cameraMove(GLFWwindow* window, int key, int scancode, int action, int mode)
 	if (lx_off < -0.35) lx_off = -0.35;
 
 	if (lz_off > 0.35) lz_off = 0.15;
-	if (lz_off < -0.35) lz_off = -0.65;
+	if (lz_off < -0.35) lz_off = -0.35;
+
+
 }
 
 // Pohyb mysi
@@ -89,6 +102,19 @@ void press(GLFWwindow* window, int button, int action, int mods) {
 }
 
 
+void resize(GLFWwindow* window, int width, int height) {
+	rWidth = (float)width;
+	rHeight = (float)height;
+
+	glViewport(0, 0, width, height);
+
+	resized = true;
+	//glClear(GL_COLOR_BUFFER_BIT);
+
+	//cout << "now" << endl;
+}
+
+
 Window::Window(int width, int height, string title, bool visible){
 	this->width = width;
 	this->height = height;
@@ -128,6 +154,31 @@ float Window::getLZOffset(){
 	return lz_off;
 }
 
+float Window::getCurrentWidth(){
+	return rWidth;
+}
+
+float Window::getCurrentHeight(){
+	return rHeight;
+}
+
+bool Window::isResized(){
+	if (resized) {
+		resized = !resized;
+		return true;
+	}
+	else
+		return false;
+}
+
+bool Window::lightMove(){
+	return light_move;
+}
+
+bool Window::algorithm(){
+	return bidirectional;
+}
+
 void Window::swapBuffers(){
 	glfwSwapBuffers(window);
 }
@@ -149,7 +200,7 @@ GLFWwindow * Window::createWindow(){
 	glfwWindowHint(GLFW_VERSION_MINOR, 2);
 	glfwWindowHint(GLFW_VISIBLE, GL_TRUE);
 	if(!visible) glfwWindowHint(GLFW_VISIBLE, GL_FALSE);
-	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+	glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
 	glfwWindowHint(GLFW_SAMPLES, 16);
 
 	// Vytvoreni okna
@@ -167,6 +218,7 @@ GLFWwindow * Window::createWindow(){
 	glfwSetKeyCallback(window, cameraMove);
 	glfwSetMouseButtonCallback(window, press);
 	glfwSetCursorPosCallback(window, mouse);
+	glfwSetWindowSizeCallback(window, resize);
 
 	// Inicializace GLEW
 	glewExperimental = GL_TRUE;
@@ -179,6 +231,7 @@ GLFWwindow * Window::createWindow(){
 	glfwGetFramebufferSize(window, &w, &h);
 	glViewport(0, 0, w, h);
 
+	// Povoleni MSAA a Blendingu
 	glEnable(GL_MULTISAMPLE);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
