@@ -52,7 +52,6 @@ public:
 	// Vlastnosti sceny a okna
 	bool isResized();
 	bool lightMove();
-	bool algorithm();
 
 private:
 

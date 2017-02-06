@@ -22,12 +22,21 @@ class ModelLoader {
 
 public:
 
-	ModelLoader(string path);
+	ModelLoader(string path, int mode);
 	vector<Triangle> getData();
+
+	void cleanData();
+
+	enum Modes{
+		VERTEX_UVS_NORMALS,
+		VERTEX_UVS,
+		VERTEX_NORMALS,
+		VERTEX
+	};
 
 private:
 
-	void loadModel(string path);
+	void loadModel(string path, int mode);
 
 	vector<vec3> vertices;
 	vector<vec2> tex_coords;
@@ -38,4 +47,6 @@ private:
 	vector<unsigned int> normal_indices;
 
 	vector<Triangle> triangles;
+
+	int load_mode;
 };

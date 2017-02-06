@@ -1,27 +1,32 @@
 /*
-* Path tracing na GPU
-* Bakalarska prace
-* David Novak, xnovak1l
-* FIT VUT Brno, 2016
-*
-* FPSMeter.h - meric FPS
-*/
+ * Path tracing na GPU
+ * Bakalarska prace
+ * David Novak, xnovak1l
+ * FIT VUT Brno, 2016
+ *
+ * FPSMeter.h - meric FPS
+ */
 
 #pragma once
 
+#include <GL/glew.h>
 
 class FPSMeter {
 
 public:
 
 	FPSMeter();
-	bool checkFPS(double currentTime);
-	void reinit(double time);
+	void startTask();
+	void stopTask();
+	void gainFPS();
 	float getFPS();
+	float getRenderingTime();
+	float getTotalTime();
 
 private:
 
-	float frames;
-	double time;
+	GLuint64 start, finish, total;
+	unsigned int queryID[2];
+	bool first;
 
 };

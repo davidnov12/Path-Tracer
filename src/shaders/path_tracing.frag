@@ -8,6 +8,10 @@
 #define DOWN -0.52
 #define FRONT -0.9
 
+#define DIFFUSE_MAT 0.1
+#define SPECULAR_MAT 0.5
+#define MIRROR_MAT 0.8
+
 #define PI 3.1415926535
 
 // Paprsek
@@ -45,19 +49,19 @@ struct Intersection{
 	float reflectivity;
 };
 
-//uniform vec3 dts[10000];
 
-/*layout (std140) uniform Triangles{
-	vec3 vertex,
-};*/
+layout (std430, binding = 0) buffer geometry{
+    Triangle triangles[];
+};
 
-Triangle tria;
+
 uniform Sphere spheres[4];
 uniform float randoms[100];
 uniform float sample_ID;
 uniform float stride;
 uniform vec3 light_pos;
 uniform vec3 view_pos;
+uniform int triangles_count;
 
 in vec3 scr_coord;
 
@@ -69,7 +73,6 @@ float ambient = 0.2;
 float diffuse = 0.8;
 
 vec3 light_color = vec3(1.0);
-//bool
 
 
 // Vygenerovani nahodneho smeru uvnitr polokoule na zaklade nahodnych cisel
@@ -120,7 +123,7 @@ vec3 convertToBNT(vec3 original, vec3 normal, vec3 tangent, vec3 bitangent){
 
 
 // Prusecik paprsku s trojuhelnikem
-bool rayTriangleIntersection(Ray ray, Triangle tr, out Intersection inter){
+bool rayTriangleIntersection(Ray ray, Triangle tr, out Intersection inter, float distanc){
 	vec3 e1 = tr.vertex1 - tr.vertex0;
 	vec3 e2 = tr.vertex2 - tr.vertex0;
 
@@ -130,22 +133,24 @@ bool rayTriangleIntersection(Ray ray, Triangle tr, out Intersection inter){
 	if(div == 0) return false;
 
 	float invdiv = 1 / div;
-
 	vec3 dis = ray.position - tr.vertex0;
-	float b1 = dot(dis, s1) * invdiv;
-	if (b1 < 0.0 || b1 > 1.0) return false;
-
 	vec3 s2 = cross(dis, e1);
-	float b2 = dot(ray.direction, s2) * invdiv;
-	if (b2 < 0.0 || (b1 + b2) > 1.0) return false;
 
 	float t = dot(e2, s2) * invdiv;
 
 	if(t < 0.009) return false;
+	//if(t + 0.1 > distanc) return false;
+
+	float b1 = dot(dis, s1) * invdiv;
+	if (b1 < 0.0 || b1 > 1.0) return false;
+	
+	float b2 = dot(ray.direction, s2) * invdiv;
+	if (b2 < 0.0 || (b1 + b2) > 1.0) return false;	
 
 	inter.dist = t;
 	inter.position = ray.position + t * ray.direction;
-	inter.normal = normalize(cross(e1, e2));
+	//inter.normal = normalize(cross(e1, e2));
+	inter.normal = tr.normal;
 	inter.color = tr.color;
 	inter.reflectivity = tr.reflectivity;
 
@@ -172,7 +177,7 @@ bool raySphereIntersection(Ray ray, Sphere sp, out Intersection inter){
 	t0 = tca - thc;
 	//t1 = tca + thc;
 
-	if(t0 < 0.00001) return false;
+	if(t0 < 0.0001) return false;
 
 	inter.dist = t0;
 	inter.position = ray.position + (t0 * ray.direction);
@@ -251,18 +256,7 @@ bool rayBoxIntersection(Ray ray, out Intersection inter){
 				inter.dist = t;
 				inter.position = point;
 				inter.normal = vec3(1.0, 0.0, 0.0);
-				//inter.color = vec3(0.6, 1.0, 0.0);
-				//inter.color = vec3(0.7, 0.85, 0.1);
-				
-				//inter.color = vec3(0.1, 0.9, 0.1);
 				inter.color = vec3(0.8, 0.99, 0.1);
-				//inter.color = vec3(0.9);
-
-				//inter.color = vec3(0.55, 0.31, 0.87);
-				//inter.color = vec3(0.8, 0.6, 0.1);
-				//inter.color = vec3(0.0, 1.0, 0.2);
-				//inter.color = vec3(0.0, 0.2, 0.8);
-				//inter.color = vec3(1.0, 0.0, 0.0);
 				inter.reflectivity = 0.1;
 
 				res = true;	
@@ -282,17 +276,7 @@ bool rayBoxIntersection(Ray ray, out Intersection inter){
 				inter.dist = t;
 				inter.position = point;
 				inter.normal = vec3(-1.0, 0.0, 0.0);
-				//inter.color = vec3(0.8, 0.2, 0.2);
-				//inter.color = vec3(0.9, 0.2, 0.0);
-				//inter.color = vec3(0.0, 0.5, 1.0);
-				//inter.color = vec3(0.85, 0.6, 0.1);
-				
-				//inter.color = vec3(0.8, 0.85, 0.1);
 				inter.color = vec3(0.1, 0.9, 0.1);
-				//inter.color = vec3(0.9);
-
-				//inter.color = vec3(0.1, 0.4, 0.9);
-				//inter.color = vec3(0.1, 0.9, 0.1);
 				inter.reflectivity = 0.1;
 
 				res = true;	
@@ -335,6 +319,7 @@ bool calculCollision(Ray ray, out Intersection inter, bool shadow){
 
 	int sphere_cnt = 4;
 	
+	// Steny
 	if(!shadow){
 		if(rayBoxIntersection(ray, coll)){
 			intersect = true;
@@ -342,29 +327,31 @@ bool calculCollision(Ray ray, out Intersection inter, bool shadow){
 		}
 	}
 
-	
-
+	// Koule
 	if(ray.position.y < light_pos.y){
-	for(int i = 0; i < sphere_cnt; i++){
-		if(raySphereIntersection(ray, spheres[i], coll)){
+		for(int i = 0; i < sphere_cnt; i++){
+			if(raySphereIntersection(ray, spheres[i], coll)){
+				if(!intersect || coll.dist < inter.dist){
+					intersect = true;
+					inter = coll;
+				}
+			}
+		}
+	}
+	
+	// Trojuhelniky
+	for(int i = 0; i < triangles_count; i++){
+		if(rayTriangleIntersection(ray, triangles[i], coll, inter.dist)){
 			if(!intersect || coll.dist < inter.dist){
 				intersect = true;
 				inter = coll;
 			}
 		}
-	}}
-	
-	if(rayTriangleIntersection(ray, tria, coll)){
-			if(!intersect || coll.dist < inter.dist){
-				intersect = true;
-				inter = coll;
-			}
 	}
 
 	return intersect;
 }
 
-int dpth = 0;
 
 vec3 directLight(vec3 position, vec3 normal, vec3 color){
   vec3 direct = vec3(0.0);
@@ -374,41 +361,9 @@ vec3 directLight(vec3 position, vec3 normal, vec3 color){
   light_ray.position = position;
   light_ray.direction = light_dir;
 
-  
-
   Intersection inter;
   bool shadow = calculCollision(light_ray, inter, true);
- // if(shadow) return vec3(1.0, 0.0, 0.0);
- // else return vec3(0.0, 0.0, 1.0);
-  direct = (ambient * color) + ((shadow? 0 : 1) * max(dot(light_dir, normal), 0.0) * color * diffuse * light_color);
-/*  
-  if(shadow && dpth < 3){
-	vec3 smooth_shadow = direct;
-
-	float o = 0.009;
-
-	for(int k = 0; k < 10; k++){
-		
-		light_ray.direction = normalize(light_pos - vec3(position.x + (k * o), position.y, position.z));
-		shadow = calculCollision(light_ray, inter, true);
-		smooth_shadow += (ambient * color) + ((shadow? 0 : 1) * max(dot(light_dir, normal), 0.0) * color * diffuse);
-
-		light_ray.direction = normalize(light_pos - vec3(position.x - (k * o), position.y, position.z));
-		shadow = calculCollision(light_ray, inter, true);
-		smooth_shadow += (ambient * color) + ((shadow? 0 : 1) * max(dot(light_dir, normal), 0.0) * color * diffuse);
-
-		light_ray.direction = normalize(light_pos - vec3(position.x, position.y, position.z + (k * o)));
-		shadow = calculCollision(light_ray, inter, true);
-		smooth_shadow += (ambient * color) + ((shadow? 0 : 1) * max(dot(light_dir, normal), 0.0) * color * diffuse);
-
-		light_ray.direction = normalize(light_pos - vec3(position.x, position.y, position.z - (k * o)));
-		shadow = calculCollision(light_ray, inter, true);
-		smooth_shadow += (ambient * color) + ((shadow? 0 : 1) * max(dot(light_dir, normal), 0.0) * color * diffuse);
-		
-	}
-
-	return smooth_shadow / 41.0;
-  }*/
+  direct = (ambient * color) + ((shadow? min(inter.dist * 4.9, 0.4) : 1) * max(dot(light_dir, normal), 0.0) * color * diffuse * light_color);
   
   return direct;
 }
@@ -417,8 +372,7 @@ vec3 directLight(vec3 position, vec3 normal, vec3 color){
 vec3 pathTrace(Ray original_ray){
 
 	Ray ray = original_ray;
-	Ray lightray;
-	vec3 ray_color = vec3(1.0), backward;
+	vec3 ray_color = vec3(1.0);
 	vec3 point_color;
 	vec3 albedo;
 	vec3 tangent, bitangent;
@@ -426,14 +380,6 @@ vec3 pathTrace(Ray original_ray){
 	int depth = 0;
 	float coef = 1.0;
 
-	vec3 tang, bitang;
-	calcTB(vec3(0.0, -1.0, 0.0), tang, bitang);
-	float rand1 = randoms[int(gl_FragCoord.x * gl_FragCoord.y * 2.7 * sample_ID) % 100];
-	float rand2 = randoms[int(gl_FragCoord.x * gl_FragCoord.y * 1.3 * sample_ID) % 100];
-	vec3 refl_dir = randomDirection(rand1, rand2);
-	lightray = Ray(light_pos, convertToBNT(refl_dir, vec3(0.0, -1.0, 0.0), tang, bitang));
-
-	for(int q = 0; q < 1; q++){
 	while (true) {
 		
 		if(!calculCollision(ray, inter, false) && depth != 0){
@@ -441,20 +387,15 @@ vec3 pathTrace(Ray original_ray){
 				ray_color = vec3(0.2);
 				break;
 			}
-			else{
+			else if(coef > 0.1){
 				ray_color = vec3(0.7);
 				break;
-			}//return vec3(0.5);
+			}
+			/*else {
+				ray_color *= 1.9;
+				break;
+			}*/
 		}
-
-		//return vec3(-inter.normal);
-		// Zadna kolize -> cerna barva
-		/*if(!calculCollision(ray, inter, false)){
-			ray_color = vec3(0.0);
-			break;
-		}*/
-
-		//return -inter.normal;
 
 		// Kolize se zdrojem svetla -> bila barva
 		if(light_source){
@@ -467,7 +408,7 @@ vec3 pathTrace(Ray original_ray){
 			break;
 
 		// Difuzni material
-		if(inter.reflectivity < 0.15){
+		if(inter.reflectivity == DIFFUSE_MAT){
 			vec3 color = inter.color * coef * (1.0 - inter.reflectivity);
 			coef *= inter.reflectivity;
 		
@@ -477,7 +418,6 @@ vec3 pathTrace(Ray original_ray){
 			// Osvetleni v bode
 			point_color = directLight(inter.position, inter.normal, inter.color);
 
-			//return point_color;
 			// barva * BRDF(difuzni)
 			ray_color = (ray_color / PI + 2 * point_color) * albedo;
 
@@ -505,7 +445,7 @@ vec3 pathTrace(Ray original_ray){
 		}
 
 		// Reflexni material
-		else if(inter.reflectivity > 0.6){
+		else if(inter.reflectivity == MIRROR_MAT){
 			vec3 color = inter.color * inter.reflectivity;
 			coef *= inter.reflectivity;
 
@@ -517,9 +457,8 @@ vec3 pathTrace(Ray original_ray){
 			ray.direction = normalize(reflect(ray.direction, inter.normal));
 		}
 
-		else{
-			inter.reflectivity = 1.0;
-			vec3 color = inter.color * inter.reflectivity;
+		else if(inter.reflectivity == SPECULAR_MAT){
+			vec3 color = inter.color;
 			coef *= 0.1;
 
 			Intersection ii;
@@ -527,6 +466,7 @@ vec3 pathTrace(Ray original_ray){
 			ray.direction = reflect(ray.direction, inter.normal);
 			calculCollision(ray, ii, false);
 
+			// Odlesk od svetla
 			if(ii.position.x <= (light_pos.x + 0.1) && ii.position.x >= (light_pos.x - 0.1) && ii.position.y == UP){
 				if(ii.position.z <= (light_pos.z + 0.1) && ii.position.z >= (light_pos.z - 0.1))
 					return light_color;
@@ -538,10 +478,10 @@ vec3 pathTrace(Ray original_ray){
 			// Osvetleni v bode
 			point_color = directLight(inter.position, inter.normal, inter.color);
 
-			// barva * BRDF(difuzni)
+			// barva * BRDF
 			ray_color = (ray_color / PI + 2.0 * point_color) * albedo;
-
-			ray_color += 0.5 * directLight(ii.position, ii.normal, ii.color);;
+			// barva odrazu
+			ray_color += 0.3 * directLight(ii.position, ii.normal, ii.color);;
 
 			// Konec cesty -> navrat vysledne barvy
 			if(randoms[int(gl_FragCoord.x * gl_FragCoord.y * sample_ID) % 100] > (max(color.r, max(color.g, color.b)))){
@@ -564,30 +504,13 @@ vec3 pathTrace(Ray original_ray){
 		}
 
 		depth += 1;
-
 	}
 
-		if(q == 0){
-			backward = ray_color;
-			depth = 1;
-			ray_color = vec3(1.0);
-			ray = lightray;
-		}
-	}
-
-	return backward;
-	//return (0.1 * ray_color) + (0.9 * backward);
+	return ray_color;
 }
 
 
 void main(){
-
-	tria.vertex0 = vec3(-0.75, 0.1, -0.0);
-	tria.vertex1 = vec3(0.75, -0.05, -0.0);
-	tria.vertex2 = vec3(0.0, 0.2, -0.2);
-	//tria.normal = vec3(-0.707, 0.707, 0.0);
-	tria.color = vec3(0.9, 0.9, 0.9);
-	tria.reflectivity = 0.1;
 
 	// Smer paprsku
 	vec3 ray_dir = vec3(scr_coord - view_pos);
@@ -598,7 +521,9 @@ void main(){
 	ray.position = view_pos;
 	ray.direction = ray_dir;
 
+	if(sample_ID < 2.0) discard;
+
 	// Barva pixelu
-	float x = 1.0 / stride;
+	float x = 1.0 / (stride - 1.0);
 	color = vec4(pathTrace(ray), x);
 }

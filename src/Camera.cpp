@@ -1,11 +1,11 @@
 /*
-* Path tracing na GPU
-* Bakalarska prace
-* David Novak, xnovak1l
-* FIT VUT Brno, 2016
-*
-* Camera.cpp - trida kamery
-*/
+ * Path tracing na GPU
+ * Bakalarska prace
+ * David Novak, xnovak1l
+ * FIT VUT Brno, 2016
+ *
+ * Camera.cpp - trida kamery
+ */
 
 #include "Camera.h"
 

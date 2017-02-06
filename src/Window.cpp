@@ -13,10 +13,20 @@ float x_off, y_off;
 float lx_off, lz_off;
 float lastX, lastY;
 float rWidth, rHeight;
-bool firstMouse = true, pressed, resized, bidirectional, light_move;
+bool firstMouse = true, pressed, resized, light_move;
 
 #define CAMERA_OFFSET 0.05
 #define LIGHT_OFFSET 0.07
+
+#define CAMERA_MAX_X 0.55
+#define CAMERA_MIN_X -0.55
+#define CAMERA_MAX_Y 0.45
+#define CAMERA_MIN_Y -0.25
+
+#define LIGHT_MAX_X 0.45
+#define LIGHT_MIN_X -0.45
+#define LIGHT_MAX_Z 0.55
+#define LIGHT_MIN_Z -0.35
 
 void cameraMove(GLFWwindow* window, int key, int scancode, int action, int mode) {
 	if (key == GLFW_KEY_W && action == GLFW_PRESS)
@@ -44,20 +54,18 @@ void cameraMove(GLFWwindow* window, int key, int scancode, int action, int mode)
 		lx_off += LIGHT_OFFSET;
 		light_move = true;
 	}
-	if (key == GLFW_KEY_B && action == GLFW_PRESS)
-		bidirectional = !bidirectional;
 	
-	if (x_off > 0.55) x_off = 0.55;
-	if (x_off < -0.55) x_off = -0.55;
+	if (x_off > CAMERA_MAX_X) x_off = CAMERA_MAX_X;
+	if (x_off < CAMERA_MIN_X) x_off = CAMERA_MIN_X;
 	
-	if (y_off > 0.45) y_off = 0.45;
-	if (y_off < -0.25) y_off = -0.25;
+	if (y_off > CAMERA_MAX_Y) y_off = CAMERA_MAX_Y;
+	if (y_off < CAMERA_MIN_Y) y_off = -CAMERA_MIN_Y;
 
-	if (lx_off > 0.35) lx_off = 0.35;
-	if (lx_off < -0.35) lx_off = -0.35;
+	if (lx_off > LIGHT_MAX_X) lx_off = LIGHT_MAX_X;
+	if (lx_off < LIGHT_MIN_X) lx_off = LIGHT_MIN_X;
 
-	if (lz_off > 0.35) lz_off = 0.15;
-	if (lz_off < -0.35) lz_off = -0.35;
+	if (lz_off > LIGHT_MAX_Z) lz_off = LIGHT_MAX_Z;
+	if (lz_off < LIGHT_MIN_Z) lz_off = LIGHT_MIN_Z;
 
 
 }
@@ -172,11 +180,11 @@ bool Window::isResized(){
 }
 
 bool Window::lightMove(){
-	return light_move;
-}
-
-bool Window::algorithm(){
-	return bidirectional;
+	if (light_move) {
+		light_move = false;
+		return true;
+	}
+	return false;
 }
 
 void Window::swapBuffers(){
@@ -196,13 +204,14 @@ GLFWwindow * Window::createWindow(){
 		return NULL;
 
 	// Atributy okna
+	glfwSwapInterval(60);
 	glfwWindowHint(GLFW_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_VERSION_MINOR, 2);
 	glfwWindowHint(GLFW_VISIBLE, GL_TRUE);
 	if(!visible) glfwWindowHint(GLFW_VISIBLE, GL_FALSE);
 	glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
 	glfwWindowHint(GLFW_SAMPLES, 16);
-
+	
 	// Vytvoreni okna
 	window = glfwCreateWindow(width, height, title.c_str(), NULL, NULL);
 

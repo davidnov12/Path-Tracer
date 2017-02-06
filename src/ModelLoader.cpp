@@ -10,15 +10,26 @@
 //#define _CRT_SECURE_NO_WARNINGS
 #include "ModelLoader.h"
 
-ModelLoader::ModelLoader(string path){
-	loadModel(path);
+ModelLoader::ModelLoader(string path, int mode){
+	loadModel(path, mode);
+	load_mode = mode;
 }
 
 vector<Triangle> ModelLoader::getData(){
 	return triangles;
 }
 
-void ModelLoader::loadModel(string path){
+void ModelLoader::cleanData(){
+	vertices.clear();
+	tex_coords.clear();
+	normals.clear();
+	vertex_indices.clear();
+	uv_indices.clear();
+	normal_indices.clear();
+	triangles.clear();
+}
+
+void ModelLoader::loadModel(string path, int mode){
 	
 	ifstream modelFile;
 	modelFile.exceptions(ifstream::badbit);
@@ -82,35 +93,85 @@ void ModelLoader::loadModel(string path){
 		else if (tmp.find("f ") != string::npos) {
 			int indices[9];
 			tmp = tmp.substr(2, tmp.length());
-			//cout << tmp << endl;
-
-			sscanf_s(tmp.c_str(), "%d/%d/%d %d/%d/%d %d/%d/%d", indices, indices + 1, indices + 2,
-				indices + 3, indices + 4, indices + 5, indices + 6, indices + 7, indices + 8);
 			
 			vector<vec3> verts;
 			vector<vec2> uvs;
 			vec3 normal;
 
-			//cout << indices[0] << endl;
+			if (mode == VERTEX_UVS_NORMALS) {
+				sscanf_s(tmp.c_str(), "%d/%d/%d %d/%d/%d %d/%d/%d", indices, indices + 1, indices + 2,
+					indices + 3, indices + 4, indices + 5, indices + 6, indices + 7, indices + 8);
 
-			//for(int e = 0; e < vertices.size(); e++){
-				//cout << indices[0] - 1 << ".x  " << vertices.at(indices[0] - 1).x << endl;
-				//cout << indices[0] - 1 << ".y  " << vertices.at(indices[0] - 1).y << endl;
-				//cout << indices[0] - 1 << ".z  " << vertices.at(indices[0] - 1).z << endl;
-			//}
-			verts.push_back(vertices.at(indices[0] - 1));
-			verts.push_back(vertices.at(indices[3] - 1));
-			verts.push_back(vertices.at(indices[6] - 1));
+				//cout << indices[0] << endl;
 
-			uvs.push_back(tex_coords.at(indices[1] - 1));
-			uvs.push_back(tex_coords.at(indices[4] - 1));
-			uvs.push_back(tex_coords.at(indices[7] - 1));
+				//for(int e = 0; e < vertices.size(); e++){
+					//cout << indices[0] - 1 << ".x  " << vertices.at(indices[0] - 1).x << endl;
+					//cout << indices[0] - 1 << ".y  " << vertices.at(indices[0] - 1).y << endl;
+					//cout << indices[0] - 1 << ".z  " << vertices.at(indices[0] - 1).z << endl;
+				//}
+				verts.push_back(vertices.at(indices[0] - 1));
+				verts.push_back(vertices.at(indices[3] - 1));
+				verts.push_back(vertices.at(indices[6] - 1));
 
-			normal = (normals.at(indices[2] - 1) + normals.at(indices[5] - 1) + normals.at(indices[8] - 1)) / 3.0f;
+				uvs.push_back(tex_coords.at(indices[1] - 1));
+				uvs.push_back(tex_coords.at(indices[4] - 1));
+				uvs.push_back(tex_coords.at(indices[7] - 1));
 
-			Triangle t(verts, uvs, normal);
+				normal = (normals.at(indices[2] - 1) + normals.at(indices[5] - 1) + normals.at(indices[8] - 1)) / 3.0f;
 
-			triangles.push_back(t);
+				Triangle t(verts, uvs, normal);
+
+				triangles.push_back(t);
+			}
+			else if (mode == VERTEX_NORMALS) {
+				if (sscanf_s(tmp.c_str(), "%d/%d %d/%d %d/%d", indices, indices + 1, indices + 2,
+					indices + 3, indices + 4, indices + 5) != 6) {
+
+					if (sscanf_s(tmp.c_str(), "%d//%d %d//%d %d//%d", indices, indices + 1, indices + 2,
+						indices + 3, indices + 4, indices + 5) != 6) return;
+				}
+
+				verts.push_back(vertices.at(indices[0] - 1));
+				verts.push_back(vertices.at(indices[2] - 1));
+				verts.push_back(vertices.at(indices[4] - 1));
+
+				normal = (normals.at(indices[1] - 1) + normals.at(indices[3] - 1) + normals.at(indices[5] - 1)) / 3.0f;
+
+				Triangle t(verts, uvs, normal);
+
+				triangles.push_back(t);
+			}
+			else if (mode == VERTEX_UVS) {
+				if (sscanf_s(tmp.c_str(), "%d/%d %d/%d %d/%d", indices, indices + 1, indices + 2,
+					indices + 3, indices + 4, indices + 5) != 6) {
+
+					if (sscanf_s(tmp.c_str(), "%d//%d %d//%d %d//%d", indices, indices + 1, indices + 2,
+						indices + 3, indices + 4, indices + 5) != 6) return;
+				}
+
+				verts.push_back(vertices.at(indices[0] - 1));
+				verts.push_back(vertices.at(indices[2] - 1));
+				verts.push_back(vertices.at(indices[4] - 1));
+
+				uvs.push_back(tex_coords.at(indices[1] - 1));
+				uvs.push_back(tex_coords.at(indices[3] - 1));
+				uvs.push_back(tex_coords.at(indices[5] - 1));
+
+				Triangle t(verts, uvs, normal);
+
+				triangles.push_back(t);
+			}
+			else if (mode == VERTEX) {
+				sscanf_s(tmp.c_str(), "%d %d %d", indices, indices + 1, indices + 2);
+
+				verts.push_back(vertices.at(indices[0] - 1));
+				verts.push_back(vertices.at(indices[1] - 1));
+				verts.push_back(vertices.at(indices[2] - 1));
+
+				Triangle t(verts, uvs, normal);
+
+				triangles.push_back(t);
+			}
 
 		}
 		//cout << "TMP " << tmp << endl;

@@ -25,17 +25,17 @@ public:
 	// Konstruktor
 	Render(Shader* program, Scene* scene, Camera* cam);
 
+	// Priprava sceny
+	void updateScene();
+
 	// Nastaveni uniformnich promennych v shaderech
 	void setUniforms();
 
 	// Pohyb kamery
-	void cameraMove(float x, float y, float lx, float lz, bool resized, bool light_move, bool algorithm);
+	void cameraMove(float x, float y, float lx, float lz, bool resized, bool light_move);
 
 	// Priprava kreslici textury
 	void setTextureFramebuffer();
-
-	// Pocet vykreslenych snimku
-	float getID();
 
 	// Zmena kroku vykreslovani vzorku
 	void setStride(int newStride);
@@ -48,6 +48,15 @@ public:
 
 	// Uvolneni dat
 	void finish();
+
+	// Struktura pro ulozeni primitiva (trojuhelniku)
+	typedef struct primitive {
+		vec4 vertex0;
+		vec4 vertex1;
+		vec4 vertex2;
+		vec4 normal;
+		vec4 color_mat;
+	} Primitive;
 
 private:
 
