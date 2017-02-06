@@ -9,6 +9,7 @@ Just download this repository and open PathTracing.sln in Visual Studio, then yo
 ## Control
 
 W,A,S,D or mouse - Camera move
+
 I,J,K,L - Light move
 
 ## Project progress
@@ -23,7 +24,10 @@ Implemented Model support.
 
 ## Example
 
-![Cornell Box](example/pt_house_example.png?raw=true "Cornell Box")
-![Cornell Box](example/pt_bunny_example.png?raw=true "Cornell Box")
+Cornell box with 4 spheres(different materials) and model of house(16 faces)
 
-Cornell Box
+![Cornell Box](example/pt_house_example.png?raw=true "Cornell Box")
+
+Cornell box with bunny model(292 faces)
+
+![Cornell Box](example/pt_bunny_example.png?raw=true "Cornell Box")
