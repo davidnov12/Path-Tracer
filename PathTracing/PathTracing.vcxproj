@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -141,6 +141,7 @@
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\Model.cpp" />
     <ClCompile Include="..\src\ModelLoader.cpp" />
+    <ClCompile Include="..\src\Octree.cpp" />
     <ClCompile Include="..\src\Render.cpp" />
     <ClCompile Include="..\src\Scene.cpp" />
     <ClCompile Include="..\src\Shader.cpp" />
@@ -153,6 +154,7 @@
     <ClInclude Include="..\src\FPSMeter.h" />
     <ClInclude Include="..\src\Model.h" />
     <ClInclude Include="..\src\ModelLoader.h" />
+    <ClInclude Include="..\src\Octree.h" />
     <ClInclude Include="..\src\Render.h" />
     <ClInclude Include="..\src\Scene.h" />
     <ClInclude Include="..\src\Shader.h" />
