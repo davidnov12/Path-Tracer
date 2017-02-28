@@ -14,6 +14,7 @@
 #include "Camera.h"
 #include "FPSMeter.h"
 #include <process.h>
+#include "Octree.h"
 
 #define DEFAULT_WIDTH 600
 #define DEFAULT_HEIGHT 600
