@@ -15,10 +15,11 @@ std::random_device rd;
 std::mt19937 gen(rd());
 std::uniform_real_distribution<> uniGen(0, 1);
 
-Render::Render(Shader* program, Scene* scene, Camera* cam){
+Render::Render(Shader* program, Scene* scene, Camera* cam, Octree* tree){
 	this->program = program;
 	this->scene = scene;
 	camera = cam;
+	octree = tree;
 
 	// Nastaveni souradnic prumetny
 	screenCoords[0] = vec3(-1.0, -1.0, -0.5);
@@ -29,8 +30,8 @@ Render::Render(Shader* program, Scene* scene, Camera* cam){
 	screenCoords[5] = vec3(-1.0, 1.0, -0.5);
 
 	createBuffers();
-
-	/*glGenFramebuffers(1, &frame);
+/*
+	glGenFramebuffers(1, &frame);
 	glBindFramebuffer(GL_FRAMEBUFFER, frame);
 
 	glGenTextures(1, &screen);
@@ -41,8 +42,8 @@ Render::Render(Shader* program, Scene* scene, Camera* cam){
 	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, screen, 0);
 	GLenum db[] = {GL_COLOR_ATTACHMENT0};
 	glDrawBuffers(1, db);
-
-	display.attachShader(Shader::VERTEX, display.loadShader("../src/shaders/display.vert"), GL_TRUE);
+*/
+	/*display.attachShader(Shader::VERTEX, display.loadShader("../src/shaders/display.vert"), GL_TRUE);
 	display.attachShader(Shader::GEOMETRY, display.loadShader("../src/shaders/display.geom"), GL_TRUE);
 	display.attachShader(Shader::FRAGMENT, display.loadShader("../src/shaders/display.frag"), GL_TRUE);
 	display.compileProgram(GL_TRUE);*/
@@ -51,10 +52,71 @@ Render::Render(Shader* program, Scene* scene, Camera* cam){
 }
 
 void Render::updateScene(){
+
+	// Trojuhelniky
 	GLuint geom_buff;
 	glGenBuffers(1, &geom_buff);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, geom_buff);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Scene::Primitive) * scene->getModel(0).triangles_count, scene->getModel(0).data, GL_STATIC_DRAW);
+
+	GLuint nodes_buff;
+	glGenBuffers(1, &nodes_buff);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, nodes_buff);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Octree::Node) * octree->getNodesCount(), octree->getNodes(), GL_STATIC_DRAW);
+
+	GLuint indices_buff;
+	glGenBuffers(1, &indices_buff);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, indices_buff);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(int) * octree->getIndicesLength(), octree->getIndices(), GL_STATIC_DRAW);
+/*
+	Octree::Node datas[2];
+	datas[0].childs[0] = 1.0;
+	datas[0].childs[1] = 0.0;
+	datas[0].childs[2] = 1.0;
+	datas[0].childs[3] = 0.0;
+	datas[0].childs[4] = 1.0;
+	datas[0].childs[5] = 0.0;
+	datas[0].childs[6] = 0.0;
+	datas[0].childs[7] = 1.0;
+	datas[0].index = 1.0;
+	datas[0].count = 0.0;
+	datas[0].leaf = 1.0;
+	datas[0].start = vec4(0.0, 0.0, 0.9, 0.0);
+	datas[0].end = vec4(1.0, 1.0, 0.0, 0.0);
+
+	datas[1].childs[0] = 0.0;
+	datas[1].childs[1] = 1.0;
+	datas[1].childs[2] = 0.0;
+	datas[1].childs[3] = 1.0;
+	datas[1].childs[4] = 0.0;
+	datas[1].childs[5] = 1.0;
+	datas[1].childs[6] = 1.0;
+	datas[1].childs[7] = 0.0;
+	datas[1].index = 0.0;
+	datas[1].count = 0.0;
+	datas[1].leaf = 0.0;
+	datas[1].start = vec4(0.0, 0.5, 0.0, 0.0);
+	datas[1].end = vec4(0.0, 0.0, 1.0, 0.0);
+
+	Octree::Node* n = octree->getNodes();
+	cout << "NODE " << n[1].start.x << endl;
+
+	// Uzly oktaloveho stromu
+	GLuint nodes_buff;
+	glGenBuffers(1, &nodes_buff);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, nodes_buff);
+	//glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Octree::Node) * octree->getNodesCount(), octree->getNodes(), GL_STATIC_DRAW);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Octree::Node) * 2, datas, GL_STATIC_DRAW);
+
+	int pole[4] = {1, 0, 1, 0};
+
+	// Indexy trojuhelniku
+	GLuint indices_buff;
+	glGenBuffers(1, &indices_buff);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, indices_buff);
+	//glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(int) * octree->getIndicesLength(), octree->getIndices(), GL_STATIC_DRAW);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(int) * 4, pole, GL_STATIC_DRAW);*/
+	
 	/*int cnt = 0, offset = 0;
 
 	for (int i = 0; i < scene->modelsCount(); i++)
@@ -141,6 +203,8 @@ float Render::getSamples(){
 
 void Render::draw(float w, float h){
 	
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
 	for (int i = 0; i < 100; i++) {
 		string s = "randoms[" + to_string(i) + "]";
 		glUniform1f(glGetUniformLocation(program->getProgram(), s.c_str()), uniGen(gen));
@@ -165,15 +229,15 @@ void Render::draw(float w, float h){
 	program->useProgram();
 
 	//setUniforms();
-	/*glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, screen);
-	glUniform1i(glGetUniformLocation(program->getProgram(), "frame"), 0);
-	glBindFramebuffer(GL_FRAMEBUFFER, frame);*/
+	//glActiveTexture(GL_TEXTURE0);
+	//glBindTexture(GL_TEXTURE_2D, screen);
+	//glUniform1i(glGetUniformLocation(program->getProgram(), "frame"), 0);
+	//glBindFramebuffer(GL_FRAMEBUFFER, frame);
 	glBindVertexArray(vao);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
-	/*glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
+	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	/*
 	display.useProgram();
 	
 	glDrawArrays(GL_POINTS, 0, 1);*/

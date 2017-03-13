@@ -5,8 +5,9 @@
 #define LEFT -0.7
 #define RIGHT 0.7
 #define UP 0.7
-#define DOWN -0.52
+#define DOWN -0.5
 #define FRONT -0.9
+#define BACK 0.9
 
 #define DIFFUSE_MAT 0.1
 #define SPECULAR_MAT 0.5
@@ -49,9 +50,38 @@ struct Intersection{
 	float reflectivity;
 };
 
+// Uzel Octree
+struct Node{
+	int childs[8];
+	int index;
+	int count;
+	int leaf;
+	int gap;
+	vec3 start;
+	vec3 end;
+};
 
+// Kontext pri pruchodu Octree 
+struct OctreeContext{
+	float tx0; float ty0; float tz0;
+	float tx1; float ty1; float tz1;
+	int current; int node_id;
+	bool init;
+};
+
+// Trojuhelniky
 layout (std430, binding = 0) buffer geometry{
     Triangle triangles[];
+};
+
+// Uzly Octree
+layout (std430, binding = 1) buffer tree_nodes{
+	Node nodes[];
+};
+
+// Indexy Octree
+layout (std430, binding = 2) buffer node_indices{
+	int indices[];
 };
 
 
@@ -62,6 +92,8 @@ uniform float stride;
 uniform vec3 light_pos;
 uniform vec3 view_pos;
 uniform int triangles_count;
+uniform int nodes_count;
+uniform int indices_count;
 
 in vec3 scr_coord;
 
@@ -69,11 +101,12 @@ out vec4 color;
 
 bool light_source = false;
 
-float ambient = 0.2;
-float diffuse = 0.8;
+float ambient = 0.1;
+float diffuse = 0.9;
 
 vec3 light_color = vec3(1.0);
 
+Ray original_ray;
 
 // Vygenerovani nahodneho smeru uvnitr polokoule na zaklade nahodnych cisel
 vec3 randomDirection(float rand1, float rand2){
@@ -123,7 +156,7 @@ vec3 convertToBNT(vec3 original, vec3 normal, vec3 tangent, vec3 bitangent){
 
 
 // Prusecik paprsku s trojuhelnikem
-bool rayTriangleIntersection(Ray ray, Triangle tr, out Intersection inter, float distanc){
+bool rayTriangleIntersection(Ray ray, Triangle tr, out Intersection inter){
 	vec3 e1 = tr.vertex1 - tr.vertex0;
 	vec3 e2 = tr.vertex2 - tr.vertex0;
 
@@ -177,7 +210,7 @@ bool raySphereIntersection(Ray ray, Sphere sp, out Intersection inter){
 	t0 = tca - thc;
 	//t1 = tca + thc;
 
-	if(t0 < 0.0001) return false;
+	if(t0 < 0.000001) return false;
 
 	inter.dist = t0;
 	inter.position = ray.position + (t0 * ray.direction);
@@ -212,8 +245,9 @@ bool rayBoxIntersection(Ray ray, out Intersection inter){
 				inter.normal = vec3(0.0, 1.0, 0.0);
 				inter.color = vec3(0.9, 0.8, 0.0);
 				inter.color = vec3(0.99);
+				//inter.color = vec3(0.9, 0.1, 0.1);
 				inter.reflectivity = 0.1;
-
+				
 				res = true;	
 			}
 		}
@@ -231,7 +265,8 @@ bool rayBoxIntersection(Ray ray, out Intersection inter){
 				inter.dist = t;
 				inter.position = point;
 				inter.normal = vec3(0.0, -1.0, 0.0);
-				inter.color = vec3(0.9, 0.0, 0.3);
+				//inter.color = vec3(0.9, 0.0, 0.3);
+				//inter.color = vec3(0.9, 0.1, 0.1);
 				inter.color = vec3(0.99);
 				inter.reflectivity = 0.1;
 			
@@ -256,9 +291,9 @@ bool rayBoxIntersection(Ray ray, out Intersection inter){
 				inter.dist = t;
 				inter.position = point;
 				inter.normal = vec3(1.0, 0.0, 0.0);
-				inter.color = vec3(0.8, 0.99, 0.1);
+				//inter.color = vec3(0.8, 0.99, 0.1);
+				inter.color = vec3(0.6, 0.1, 0.8);
 				inter.reflectivity = 0.1;
-
 				res = true;	
 			}
 		}
@@ -278,7 +313,6 @@ bool rayBoxIntersection(Ray ray, out Intersection inter){
 				inter.normal = vec3(-1.0, 0.0, 0.0);
 				inter.color = vec3(0.1, 0.9, 0.1);
 				inter.reflectivity = 0.1;
-
 				res = true;	
 			}
 		}
@@ -297,25 +331,356 @@ bool rayBoxIntersection(Ray ray, out Intersection inter){
 				inter.position = point;
 				inter.normal = vec3(0.0, 0.0, 1.0);
 				inter.color = vec3(0.99);
+				//inter.color = vec3(0.9, 0.1, 0.1);
 				inter.reflectivity = 0.1;
-			
 				res = true;
 			}
 		}
 	}
-	
+
 	return res;
 
 }
 
+
+// Octree
+
+uint a;
+float tx0, ty0, tz0, tx1, ty1, tz1;
+
+// Prvni zasazeny uzel
+int firstNode(float tx0, float ty0, float tz0, float txm, float tym, float tzm) {
+	uint answer = 0;
+							
+	if (tx0 > ty0) {
+		if (tx0 > tz0) { // PLANE YZ
+			if (tym < tx0) answer |= 2;    
+			if (tzm < tx0) answer |= 1;    
+			return int(answer);
+		}
+	}
+	else {
+		if (ty0 > tz0) { // PLANE XZ
+			if (txm < ty0) answer |= 4;    
+			if (tzm < ty0) answer |= 1; 
+			return int(answer);
+		}
+	}
+	// PLANE XY
+	if (txm < tz0) answer |= 4;    
+	if (tym < tz0) answer |= 2;    
+	return int(answer);
+}
+
+
+// Dalsi zasazeny uzel
+int nextNode(float txm, int x, float tym, int y, float tzm, int z) {
+	if (txm < tym) {
+		if (txm < tzm) return x;   
+	}
+	else {
+		if (tym < tzm) return y; 
+	}
+	return z;
+}
+
+
+// Pruchod Octree
+bool iterativeTraversal(Ray ray, int node, out Intersection inters) {
+	int current;
+	float txm, tym, tzm;
+	bool init = false, res = false;
+	OctreeContext context;
+	OctreeContext states[10];
+	float closest = 100.0;
+	int sp = 0;
+	int cycles = 0;
+
+	do{
+		cycles += 1;
+		
+		if (nodes[node].leaf == 1) {
+			
+				
+			if (nodes[node].count != 0) {
+	
+				Intersection inter;
+				//for(int i = 0; i < triangles_count; i++){
+				for(int i = 0; i < nodes[node].count; i++){
+					//if(rayTriangleIntersection(original_ray, triangles[i], inter)){
+					if(rayTriangleIntersection(original_ray, triangles[indices[nodes[node].index + i]], inter)){	
+						if(!res || inter.dist < inters.dist){
+						//if(i == 12) abc = true;
+							res = true;
+							inters = inter;
+						}
+					}
+				}
+
+				if(res) return true;
+			}
+
+			sp -= 1;
+			if (sp < 0) {
+				break;
+				//node_id = node;
+				//return false;
+			}
+
+			tx0 = states[sp].tx0;
+			ty0 = states[sp].ty0;
+			tz0 = states[sp].tz0;
+			tx1 = states[sp].tx1;
+			ty1 = states[sp].ty1;
+			tz1 = states[sp].tz1;
+			current = states[sp].current;
+			node = states[sp].node_id;
+			init = states[sp].init;
+		}
+
+		
+		if (tx1 < 0 || ty1 < 0 || tz1 < 0) {
+			sp -= 1;
+			if (sp < 0) {
+				break;
+				//node_id = node;
+				//return false;
+			}
+			tx0 = states[sp].tx0;
+			ty0 = states[sp].ty0;
+			tz0 = states[sp].tz0;
+			tx1 = states[sp].tx1;
+			ty1 = states[sp].ty1;
+			tz1 = states[sp].tz1;
+			current = states[sp].current;
+			node = states[sp].node_id;
+			init = states[sp].init;
+		}
+
+
+		txm = 0.5f * (tx0 + tx1);
+		tym = 0.5f * (ty0 + ty1);
+		tzm = 0.5f * (tz0 + tz1);
+
+
+		if (!init) {
+			init = !init;
+			current = firstNode(tx0, ty0, tz0, txm, tym, tzm);
+		}
+
+
+		context.tx0 = tx0;
+		context.ty0 = ty0;
+		context.tz0 = tz0;
+		context.tx1 = tx1;
+		context.ty1 = ty1;
+		context.tz1 = tz1;
+		context.node_id = node;
+		context.init = true;
+		init = false;
+
+		switch (current) {
+		case 0:
+			node = nodes[node].childs[a];
+			context.current = nextNode(txm, 4, tym, 2, tzm, 1);
+			tx1 = txm; ty1 = tym; tz1 = tzm;
+			break;
+
+		case 1:
+			node = nodes[node].childs[1 ^ a];
+			context.current = nextNode(txm, 5, tym, 3, tz1, 8);
+			tx1 = txm; ty1 = tym; tz0 = tzm;
+			break;
+
+		case 2:
+			node = nodes[node].childs[2 ^ a];
+			context.current = nextNode(txm, 6, ty1, 8, tzm, 3);
+			tx1 = txm; ty0 = tym; tz1 = tzm;
+			break;
+
+		case 3:
+			node = nodes[node].childs[3 ^ a];
+			context.current = nextNode(txm, 7, ty1, 8, tz1, 8);
+			tx1 = txm; ty0 = tym; tz0 = tzm;
+			break;
+
+		case 4:
+			node = nodes[node].childs[4 ^ a];
+			context.current = nextNode(tx1, 8, tym, 6, tzm, 5);
+			tx0 = txm; ty1 = tym; tz1 = tzm;
+			break;
+
+		case 5:
+			node = nodes[node].childs[5 ^ a];
+			context.current = nextNode(tx1, 8, tym, 7, tz1, 8);
+			tx0 = txm; ty1 = tym; tz0 = tzm;
+			break;
+
+		case 6:
+			node = nodes[node].childs[6 ^ a];
+			context.current = nextNode(tx1, 8, ty1, 8, tzm, 7);
+			tx0 = txm; ty0 = tym; tz1 = tzm;
+			break;
+
+		case 7:
+			node = nodes[node].childs[7 ^ a];
+			context.current = 8;
+			tx0 = txm; ty0 = tym; tz0 = tzm;
+			break;
+
+		case 8:
+			do {
+			
+				cycles += 1;
+
+				sp -= 1;
+				if (sp < 0) {
+					//result = -1;
+					//node_id = node;
+					return false;
+				}
+
+				tx0 = states[sp].tx0;
+				ty0 = states[sp].ty0;
+				tz0 = states[sp].tz0;
+				tx1 = states[sp].tx1;
+				ty1 = states[sp].ty1;
+				tz1 = states[sp].tz1;
+				current = states[sp].current;
+				node = states[sp].node_id;
+
+				txm = 0.5f * (tx0 + tx1);
+				tym = 0.5f * (ty0 + ty1);
+				tzm = 0.5f * (tz0 + tz1);
+
+				switch (current) {
+
+				case 0:
+					node = nodes[node].childs[a];
+					context.current = nextNode(txm, 4, tym, 2, tzm, 1);
+					tx1 = txm; ty1 = tym; tz1 = tzm;
+					break;
+
+				case 1:
+					node = nodes[node].childs[1 ^ a];
+					context.current = nextNode(txm, 5, tym, 3, tz1, 8);
+					tx1 = txm; ty1 = tym; tz0 = tzm;
+					break;
+
+				case 2:
+					node = nodes[node].childs[2 ^ a];
+					context.current = nextNode(txm, 6, ty1, 8, tzm, 3);
+					tx1 = txm; ty0 = tym; tz1 = tzm;
+					break;
+
+				case 3:
+					node = nodes[node].childs[3 ^ a];
+					context.current = nextNode(txm, 7, ty1, 8, tz1, 8);
+					tx1 = txm; ty0 = tym; tz0 = tzm;
+					break;
+
+				case 4:
+					node = nodes[node].childs[4 ^ a];
+					context.current = nextNode(tx1, 8, tym, 6, tzm, 5);
+					tx0 = txm; ty1 = tym; tz1 = tzm;
+					break;
+
+				case 5:
+					node = nodes[node].childs[5 ^ a];
+					context.current = nextNode(tx1, 8, tym, 7, tz1, 8);
+					tx0 = txm; ty1 = tym; tz0 = tzm;
+					break;
+
+				case 6:
+					node = nodes[node].childs[6 ^ a];
+					context.current = nextNode(tx1, 8, ty1, 8, tzm, 7);
+					tx0 = txm; ty0 = tym; tz1 = tzm;
+					break;
+
+				case 7:
+					node = nodes[node].childs[7 ^ a];
+					context.current = 8;
+					tx0 = txm; ty0 = tym; tz0 = tzm;
+					break;
+
+				}
+
+			} while (current == 8 && cycles < 30);
+			
+			break;
+		}
+
+		states[sp] = context;
+		sp += 1;
+
+	} while (sp >= 0 && cycles < 30);
+
+	return res;
+}
+
+// Hlavni funkce pro pruchod Octree
+bool octreeTraversal(Ray ray, out Intersection inters) {
+	a = 0;
+
+	original_ray.direction = ray.direction;
+	original_ray.position = ray.position;
+	Ray tmp_ray;
+	tmp_ray.position = ray.position;
+	tmp_ray.direction = ray.direction;
+
+	if (ray.direction.x < 0.0) {
+		tmp_ray.position.x = (RIGHT + LEFT) - ray.position.x;
+		tmp_ray.direction.x *= -1.0;
+		a |= 4;
+	}
+
+	if (ray.direction.y < 0.0) {
+		tmp_ray.position.y = (UP + DOWN) - ray.position.y;
+		tmp_ray.direction.y *= -1.0;
+		a |= 2;
+	}
+
+	if (ray.direction.z > 0.0) {
+		tmp_ray.position.z = (BACK + FRONT) - ray.position.z;
+		tmp_ray.direction.z *= -1.0;
+		a |= 1;
+	}
+
+	/*if (ray.direction.x == 0.0) tmp_ray.direction.x = 0.000000000001f;
+	if (ray.direction.y == 0.0) tmp_ray.direction.y = 0.000000000001f;
+	if (ray.direction.z == 0.0) tmp_ray.direction.z = -0.000000000001f;*/
+
+	float invDirx = 1.0 / tmp_ray.direction.x;
+	float invDiry = 1.0 / tmp_ray.direction.y;
+	float invDirz = 1.0 / tmp_ray.direction.z;
+
+	tx0 = (LEFT - tmp_ray.position.x) * invDirx;
+	tx1 = (RIGHT - tmp_ray.position.x) * invDirx;
+
+	ty0 = (DOWN - tmp_ray.position.y) * invDiry;
+	ty1 = (UP - tmp_ray.position.y) * invDiry;
+
+	tz0 = (BACK - tmp_ray.position.z) * invDirz;
+	tz1 = (FRONT - tmp_ray.position.z) * invDirz;
+	
+	Intersection inter;
+
+	if(max(tx0, max(ty0, tz0)) < min(tx1, min(ty1, tz1)))
+		if(iterativeTraversal(tmp_ray, 0, inter)){
+			inters = inter;
+			return true;
+		}
+
+	return false;
+}
+
+vec3 cll;
 
 // Spocitani nejblizsi kolize paprsku se scenou
 bool calculCollision(Ray ray, out Intersection inter, bool shadow){
 
 	bool intersect = false;
 	Intersection coll;
-
-	inter.tangent = inter.bitangent = vec3(0.0);
 
 	int sphere_cnt = 4;
 	
@@ -338,17 +703,26 @@ bool calculCollision(Ray ray, out Intersection inter, bool shadow){
 			}
 		}
 	}
+
+	// Octree
+	if(octreeTraversal(ray, coll)){
+		if(!intersect || coll.dist < inter.dist){
+				intersect = true;
+				inter = coll;
+		}
+	}
 	
 	// Trojuhelniky
-	for(int i = 0; i < triangles_count; i++){
-		if(rayTriangleIntersection(ray, triangles[i], coll, inter.dist)){
+	/*for(int i = 0; i < triangles_count; i++){
+		if(rayTriangleIntersection(ray, triangles[i], coll)){
 			if(!intersect || coll.dist < inter.dist){
+				//if(i == 12) abc = true;
 				intersect = true;
 				inter = coll;
 			}
 		}
-	}
-
+	}*/
+		
 	return intersect;
 }
 
@@ -363,8 +737,10 @@ vec3 directLight(vec3 position, vec3 normal, vec3 color){
 
   Intersection inter;
   bool shadow = calculCollision(light_ray, inter, true);
-  direct = (ambient * color) + ((shadow? min(inter.dist * 4.9, 0.4) : 1) * max(dot(light_dir, normal), 0.0) * color * diffuse * light_color);
+  direct = (ambient * color) + ((shadow? min(inter.dist * 4.9, 0.1) : 1) * max(dot(light_dir, normal), 0.0) * color * diffuse * light_color);
   
+  //if(shadow) direct = vec3(1, 1, 0);
+
   return direct;
 }
 

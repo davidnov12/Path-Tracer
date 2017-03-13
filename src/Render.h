@@ -15,6 +15,7 @@
 #include "Shader.h"
 #include "Scene.h"
 #include "Camera.h"
+#include "Octree.h"
 
 using namespace glm;
 
@@ -23,7 +24,7 @@ class Render{
 public:
 
 	// Konstruktor
-	Render(Shader* program, Scene* scene, Camera* cam);
+	Render(Shader* program, Scene* scene, Camera* cam, Octree* tree);
 
 	// Priprava sceny
 	void updateScene();
@@ -80,6 +81,9 @@ private:
 
 	// Kamera
 	Camera* camera;
+
+	// Oktalovy strom
+	Octree* octree;
 
 	// Vytvoreni VAO a VBO
 	void createBuffers();

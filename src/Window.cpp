@@ -59,7 +59,7 @@ void cameraMove(GLFWwindow* window, int key, int scancode, int action, int mode)
 	if (x_off < CAMERA_MIN_X) x_off = CAMERA_MIN_X;
 	
 	if (y_off > CAMERA_MAX_Y) y_off = CAMERA_MAX_Y;
-	if (y_off < CAMERA_MIN_Y) y_off = -CAMERA_MIN_Y;
+	if (y_off < CAMERA_MIN_Y) y_off = CAMERA_MIN_Y;
 
 	if (lx_off > LIGHT_MAX_X) lx_off = LIGHT_MAX_X;
 	if (lx_off < LIGHT_MIN_X) lx_off = LIGHT_MIN_X;
@@ -128,6 +128,16 @@ Window::Window(int width, int height, string title, bool visible){
 	this->height = height;
 	this->title = title;
 	this->visible = visible;
+	this->share = NULL;
+	window = createWindow();
+}
+
+Window::Window(int width, int height, string title, bool visible, GLFWwindow * shared){
+	this->width = width;
+	this->height = height;
+	this->title = title;
+	this->visible = visible;
+	this->share = shared;
 	window = createWindow();
 }
 
@@ -204,7 +214,7 @@ GLFWwindow * Window::createWindow(){
 		return NULL;
 
 	// Atributy okna
-	glfwSwapInterval(60);
+	//glfwSwapInterval(60);
 	glfwWindowHint(GLFW_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_VERSION_MINOR, 2);
 	glfwWindowHint(GLFW_VISIBLE, GL_TRUE);

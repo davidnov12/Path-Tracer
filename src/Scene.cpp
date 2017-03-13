@@ -67,6 +67,10 @@ void Scene::addModel(ModelLoader obj, vec3 color, float material){
 	models.push_back(md);
 }
 
+void Scene::addModel(Model mod){
+	models.push_back(mod);
+}
+
 void Scene::translateObject(Model md, vec3 translate){
 	for(int i = 0; i < md.triangles_count; i++){
 		md.data[i].vertex0 = md.data[i].vertex0 + vec4(translate, 0.0f);

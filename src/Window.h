@@ -21,6 +21,7 @@ public:
 
 	// Konstruktor
 	Window(int width, int height, string title, bool visible);
+	Window(int width, int height, string title, bool visible, GLFWwindow* shared);
 
 	// Uzavreni okna
 	void closeWindow();
@@ -62,6 +63,7 @@ private:
 
 	// Okno
 	GLFWwindow* window;
+	GLFWwindow* share;
 
 	// Vytvoreni okna
 	GLFWwindow* createWindow();

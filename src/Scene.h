@@ -59,6 +59,7 @@ public:
 	// Pridani objektu do sceny
 	void addSphere(Sphere obj);
 	void addModel(ModelLoader obj, vec3 color, float material);
+	void addModel(Model mod);
 
 	void translateObject(Model md, vec3 translate);
 	void scaleObject(Model md, vec3 scale);
