@@ -19,13 +19,37 @@
 #define DEFAULT_WIDTH 600
 #define DEFAULT_HEIGHT 600
 
+<<<<<<< HEAD
 #define BUNNY_SCENE 1
 //#define HOUSE_SCENE 1
+=======
+#define DEBUG_OCTREE 1
+
+char title[100];
+
+
+void thr(void* param) {
+	Window win(600, 600, "Thread", false);
+	Shader display;
+	
+	display.attachShader(Shader::VERTEX, display.loadShader("../src/shaders/display.vert"), GL_TRUE);
+	display.attachShader(Shader::GEOMETRY, display.loadShader("../src/shaders/display.geom"), GL_TRUE);
+	display.attachShader(Shader::FRAGMENT, display.loadShader("../src/shaders/display.frag"), GL_TRUE);
+	display.compileProgram(GL_TRUE);
+
+	while (!win.getCloseState()) {
+		glfwMakeContextCurrent(win.getWindow());
+		display.useProgram();
+		glDrawArrays(GL_POINTS, 0, 1);
+		win.swapBuffers();
+	}
+>>>>>>> origin/master
 
 char title[100];
 
 
 int main() {
+	if(!DEBUG_OCTREE){
 	Window window(DEFAULT_WIDTH, DEFAULT_HEIGHT, "Path Tracing", true);
 	Shader path;
 	Camera camera(vec3(0.0, 0.0, 2.0), DEFAULT_WIDTH, DEFAULT_HEIGHT);
@@ -98,6 +122,42 @@ int main() {
 	// Uvolneni objektu
 	tracer.finish();
 	window.closeWindow();
+<<<<<<< HEAD
 	
+=======
+	}
+	
+	
+	
+	else{
+	
+	Scene::Primitive p[2];
+	p[0].vertex0 = vec4(0.6, -0.5, -0.1, 1.0);
+	p[0].vertex1 = vec4(0.1, -0.5, -0.1, 1.0);
+	p[0].vertex2 = vec4(0.4, -0.5, -0.3, 1.0);
+	p[0].normal = vec4();
+	p[0].color_mat = vec4();
+
+	p[1].vertex0 = vec4(0.6, -0.2, -0.1, 1.0);
+	p[1].vertex1 = vec4(0.1, -0.2, -0.1, 1.0);
+	p[1].vertex2 = vec4(0.4, -0.2, -0.3, 1.0);
+	p[1].normal = vec4();
+	p[1].color_mat = vec4();
+	Scene::Model m;
+	m.triangles_count = 2;
+	m.data = p;
+
+	Octree o(m, 1);
+
+	o.printTree();
+	o.printUsesLeafs();
+	cout << endl;
+
+	o.octreeTraversal(vec3(0.6f, -0.4f, 1.0f), vec3(0.0f, 0.0f, -1.0f));
+
+	system("pause");
+	
+	}
+>>>>>>> origin/master
 	return 0;
 }
