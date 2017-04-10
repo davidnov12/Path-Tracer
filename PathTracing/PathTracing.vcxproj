@@ -142,6 +142,7 @@
     <ClCompile Include="..\src\Model.cpp" />
     <ClCompile Include="..\src\ModelLoader.cpp" />
     <ClCompile Include="..\src\Octree.cpp" />
+    <ClCompile Include="..\src\png\lodepng.cpp" />
     <ClCompile Include="..\src\Render.cpp" />
     <ClCompile Include="..\src\Scene.cpp" />
     <ClCompile Include="..\src\Shader.cpp" />
@@ -155,6 +156,7 @@
     <ClInclude Include="..\src\Model.h" />
     <ClInclude Include="..\src\ModelLoader.h" />
     <ClInclude Include="..\src\Octree.h" />
+    <ClInclude Include="..\src\png\lodepng.h" />
     <ClInclude Include="..\src\Render.h" />
     <ClInclude Include="..\src\Scene.h" />
     <ClInclude Include="..\src\Shader.h" />
