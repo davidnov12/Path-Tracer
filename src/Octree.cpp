@@ -17,7 +17,6 @@ Octree::Octree(Scene::Model md, int primitivesPerList){
 	
 	cout << "Octree building..." << endl;
 
-<<<<<<< HEAD
 	initOctree();
 	buildOctree(md, primitivesPerList);
 	linkOctree();
@@ -42,13 +41,13 @@ Octree::Node * Octree::getNodes() {
 
 int Octree::getIndicesLength() {
 	return indices.size();
-=======
-int Octree::getNodesCount(){
-	return nodes.size();
->>>>>>> origin/master
 }
 
-void Octree::initOctree(){
+int Octree::getNodesCount() {
+	return nodes.size();
+}
+
+void Octree::initOctree() {
 	Node n;
 	n.index = n.count = 0;
 	n.leaf = 1;
@@ -65,16 +64,11 @@ void Octree::initOctree(){
 	nodes_count = 1;
 }
 
-<<<<<<< HEAD
 int cts = 0;
 vector<int> used;
 
 void Octree::buildOctree(Scene::Model md, int primitivesPerList) {
 
-=======
-void Octree::buildOctree(Scene::Model md, int primitivesPerList){
-	
->>>>>>> origin/master
 	vec4 edge, v1, v2;
 	float len;
 
@@ -91,7 +85,6 @@ void Octree::buildOctree(Scene::Model md, int primitivesPerList){
 		//cout << "Building Octree... " << i / MAX_NODES << endl;
 
 		// Listove uzly
-<<<<<<< HEAD
 		if (nodes.at(i).leaf) {
 
 			// Vsechny trojuhelniky
@@ -109,64 +102,6 @@ void Octree::buildOctree(Scene::Model md, int primitivesPerList){
 				}
 			}
 
-=======
-		if (nodes.at(j).leaf) {
-
-			// Vsechny trojuhelniky v modelu
-			for (int i = 0; i < md.triangles_count; i++) {
-
-				// Vsechny 3 hrany trojuhelniku
-				for(int k = 0; k < 3; k++){
-					
-					// Hrany trojuhelniku
-					if (k == 0) {
-						len = length(vec3(md.data[i].vertex1) - vec3(md.data[i].vertex0));
-						edge = vec4(normalize(vec3(md.data[i].vertex1) - vec3(md.data[i].vertex0)), 1.0f);
-						v1 = md.data[i].vertex0;
-						v2 = md.data[i].vertex1;
-					}
-					else if (k == 1) {
-						len = length(vec3(md.data[i].vertex2) - vec3(md.data[i].vertex1));
-						edge = vec4(normalize(vec3(md.data[i].vertex2) - vec3(md.data[i].vertex1)), 1.0f);
-						v1 = md.data[i].vertex1;
-						v2 = md.data[i].vertex2;
-					}
-					else if (k == 2) {
-						len = length(vec3(md.data[i].vertex0) - vec3(md.data[i].vertex2));
-						edge = vec4(normalize(vec3(md.data[i].vertex0) - vec3(md.data[i].vertex2)), 1.0f);
-						v1 = md.data[i].vertex2;
-						v2 = md.data[i].vertex0;
-					}
-
-					// Vrchol A trojuhelniku lezi v bounding boxu
-					if (isInBox(vec3(v2), vec3(nodes.at(j).start), vec3(nodes.at(j).end))) {
-						
-						if (!uniqueIndices(i, j))
-							tmp_indices.at(j).push_back(i);
-					}
-
-					// Vrchol B trojuhelniku lezi v bounding boxu
-					if (isInBox(vec3(v1), vec3(nodes.at(j).start), vec3(nodes.at(j).end))) {
-						
-						if (!uniqueIndices(i, j))
-							tmp_indices.at(j).push_back(i);
-					}
-
-					// Hrana trojuhelniku prochazi pres bounding box
-					if (edgeBoxIntersection(v1, edge, vec3(nodes.at(j).start), vec3(nodes.at(j).end))) {
-						//cout << "EDG " << t << endl;
-						if (!uniqueIndices(i, j) && t <= len && t >= 0.0) {
-							tmp_indices.at(j).push_back(i);
-						}
-					}
-				}
-			}
-
-			// Rozdeleni uzlu
-			if (tmp_indices.at(j).size() > primitivesPerList && nodes.size() < MAX_NODES){
-				
-				makeChilds(j);
->>>>>>> origin/master
 			}
 
 			// Expanze uzlu
@@ -259,11 +194,7 @@ bool Octree::edgeBoxIntersection(vec4 origin, vec4 edge, vec3 boxStart, vec3 box
 		t = (planeHeight - position.y) / direction.y;
 		point = position + (t * direction);
 		if (point.z >= boxEnd.z && point.z <= boxStart.z && point.x >= boxStart.x && point.x <= boxEnd.x) {
-<<<<<<< HEAD
 			if (t < closest && t > 0.0) {
-=======
-			if (abs(t) < abs(closest) && t > 0.0) {
->>>>>>> origin/master
 				closest = t;
 				res = true;
 			}
@@ -277,11 +208,7 @@ bool Octree::edgeBoxIntersection(vec4 origin, vec4 edge, vec3 boxStart, vec3 box
 		point = position + (t * direction);
 
 		if (point.z >= boxEnd.z && point.z <= boxStart.z && point.x >= boxStart.x && point.x <= boxEnd.x) {
-<<<<<<< HEAD
 			if (t < closest && t > 0.0) {
-=======
-			if (abs(t) < abs(closest) && t > 0.0) {
->>>>>>> origin/master
 				closest = t;
 				res = true;
 			}
@@ -295,11 +222,7 @@ bool Octree::edgeBoxIntersection(vec4 origin, vec4 edge, vec3 boxStart, vec3 box
 		point = position + (t * direction);
 
 		if (point.z >= boxEnd.z && point.z <= boxStart.z && point.y >= boxStart.y && point.y <= boxEnd.y) {
-<<<<<<< HEAD
 			if (t < closest && t > 0.0) {
-=======
-			if (abs(t) < abs(closest) && t > 0.0) {
->>>>>>> origin/master
 				closest = t;
 				res = true;
 			}
@@ -313,11 +236,7 @@ bool Octree::edgeBoxIntersection(vec4 origin, vec4 edge, vec3 boxStart, vec3 box
 		point = position + (t * direction);
 
 		if (point.z >= boxEnd.z && point.z <= boxStart.z && point.y >= boxStart.y && point.y <= boxEnd.y) {
-<<<<<<< HEAD
 			if (t < closest && t > 0.0) {
-=======
-			if (abs(t) < abs(closest) && t > 0.0) {
->>>>>>> origin/master
 				closest = t;
 				res = true;
 			}
@@ -331,11 +250,7 @@ bool Octree::edgeBoxIntersection(vec4 origin, vec4 edge, vec3 boxStart, vec3 box
 		point = position + (t * direction);
 
 		if (point.x >= boxStart.x && point.x <= boxEnd.x && point.y >= boxStart.y && point.y <= boxEnd.y) {
-<<<<<<< HEAD
 			if (t < closest && t > 0.0) {
-=======
-			if (abs(t) < abs(closest) && t > 0.0) {
->>>>>>> origin/master
 				closest = t;
 				res = true;
 			}
@@ -349,11 +264,7 @@ bool Octree::edgeBoxIntersection(vec4 origin, vec4 edge, vec3 boxStart, vec3 box
 		point = position + (t * direction);
 
 		if (point.x >= boxStart.x && point.x <= boxEnd.x && point.y >= boxStart.y && point.y <= boxEnd.y) {
-<<<<<<< HEAD
 			if (t < closest && t > 0.0) {
-=======
-			if (abs(t) < abs(closest) && t > 0.0) {
->>>>>>> origin/master
 				closest = t;
 				res = true;
 			}
@@ -367,49 +278,16 @@ bool Octree::edgeBoxIntersection(vec4 origin, vec4 edge, vec3 boxStart, vec3 box
 	
 }
 
-<<<<<<< HEAD
 
 bool Octree::trinagleAABBIntersection(vec3 v0, vec3 v1, vec3 v2, vec3 boxStart, vec3 boxEnd){
 	
-=======
-bool Octree::uniqueIndices(int inserted, int nodeIndex){
-	
-	for (int i = 0; i < tmp_indices.at(nodeIndex).size(); i++)
-		if (tmp_indices.at(nodeIndex).at(i) == inserted)
-			return true;
-
-	return false;
-}
-
-void Octree::linkOctree(){
-	int current_prt = 0;
-
-	for (int i = 0; i < nodes.size(); i++) {
-		
-		if (nodes.at(i).leaf) {
-			nodes.at(i).index = current_prt;
-			nodes.at(i).count = tmp_indices.at(i).size();
-			current_prt += tmp_indices.at(i).size();
-			
-			for(int j = 0; j < tmp_indices.at(i).size(); j++){
-				indices.push_back(tmp_indices.at(i).at(j));
-			}
-		}
-	}
-}
->>>>>>> origin/master
 
 	if (isInBox(v0, boxStart, boxEnd)) return true;
 
-<<<<<<< HEAD
 	if (isInBox(v1, boxStart, boxEnd)) return true;
-=======
-void Octree::print_tree() {
->>>>>>> origin/master
 
 	if (isInBox(v2, boxStart, boxEnd)) return true;
 
-<<<<<<< HEAD
 	float max_x = max(v0.x, max(v1.x, v2.x));
 	float min_x = min(v0.x, min(v1.x, v2.x));
 	float max_y = max(v0.y, max(v1.y, v2.y));
@@ -423,12 +301,6 @@ void Octree::print_tree() {
 		if (v0.y <= boxStart.y || v1.y <= boxStart.y || v2.y <= boxStart.y) {
 
 			//cout << "DOWN IN" << endl;
-=======
-		if(!nodes.at(i).leaf){
-		
-			cout << i << endl;
-			cout << "////////////////////////" << endl;
->>>>>>> origin/master
 
 			if (boxStart.x <= max_x && boxEnd.x >= min_x) {
 				if (boxStart.z >= min_z && boxEnd.z <= max_z) {
@@ -436,7 +308,6 @@ void Octree::print_tree() {
 					return true;
 				}
 			}
-<<<<<<< HEAD
 
 		}
 	}
@@ -553,8 +424,6 @@ void Octree::print_tree() {
 			for (int j = 0; j < 8; j++) {
 				cout << nodes.at(i).childs[j] << "  ";
 			}
-=======
->>>>>>> origin/master
 			cout << endl;
 		}
 	}
@@ -563,8 +432,4 @@ void Octree::print_tree() {
 
 void Octree::printVec(vec3 v) {
 	cout << v.x << " " << v.y << " " << v.z << endl;
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> origin/master
