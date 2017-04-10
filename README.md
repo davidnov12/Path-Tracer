@@ -12,6 +12,8 @@ W,A,S,D or mouse - Camera move
 
 I,J,K,L - Light move
 
+P - Take screenshot (png format)
+
 ## Project progress
 
 Implemented Ray Tracing method.
