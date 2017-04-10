@@ -13,15 +13,16 @@ float x_off, y_off;
 float lx_off, lz_off;
 float lastX, lastY;
 float rWidth, rHeight;
-bool firstMouse = true, pressed, resized, light_move;
+bool firstMouse = true, pressed, resized, light_move, save_img = false;
+
 
 #define CAMERA_OFFSET 0.05
 #define LIGHT_OFFSET 0.07
 
-#define CAMERA_MAX_X 0.55
-#define CAMERA_MIN_X -0.55
-#define CAMERA_MAX_Y 0.45
-#define CAMERA_MIN_Y -0.25
+#define CAMERA_MAX_X 0.5
+#define CAMERA_MIN_X -0.5
+#define CAMERA_MAX_Y 0.3
+#define CAMERA_MIN_Y -0.3
 
 #define LIGHT_MAX_X 0.45
 #define LIGHT_MIN_X -0.45
@@ -53,6 +54,10 @@ void cameraMove(GLFWwindow* window, int key, int scancode, int action, int mode)
 	if (key == GLFW_KEY_L && action == GLFW_PRESS){
 		lx_off += LIGHT_OFFSET;
 		light_move = true;
+	}
+
+	if (key == GLFW_KEY_P && action == GLFW_PRESS) {
+		save_img = true;
 	}
 	
 	if (x_off > CAMERA_MAX_X) x_off = CAMERA_MAX_X;
@@ -93,11 +98,11 @@ void mouse(GLFWwindow* window, double xpos, double ypos) {
 	lastX = xpos;
 	lastY = ypos;
 
-	if (x_off > 0.55) x_off = 0.55;
-	if (x_off < -0.55) x_off = -0.55;
+	if (x_off > CAMERA_MAX_X) x_off = CAMERA_MAX_X;
+	if (x_off < CAMERA_MIN_X) x_off = CAMERA_MIN_X;
 
-	if (y_off > 0.45) y_off = 0.45;
-	if (y_off < -0.25) y_off = -0.25;
+	if (y_off > CAMERA_MAX_Y) y_off = CAMERA_MAX_Y;
+	if (y_off < CAMERA_MIN_Y) y_off = CAMERA_MIN_Y;
 
 	
 }
@@ -181,8 +186,15 @@ float Window::getCurrentHeight(){
 }
 
 bool Window::isResized(){
+	if (save_img) {
+		savePNG();
+		save_img = false;
+	}
+	
 	if (resized) {
 		resized = !resized;
+		width = getCurrentWidth();
+		height = getCurrentHeight();
 		return true;
 	}
 	else
@@ -195,6 +207,34 @@ bool Window::lightMove(){
 		return true;
 	}
 	return false;
+}
+
+void Window::savePNG(){
+	char* pixels = new char[width * height * 4];
+
+	glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+
+	vector<unsigned char> data(width * height * 4), png;
+
+	for (int i = 0; i < height; i++) {
+		for (int j = 0; j < width; j++) {
+			size_t oldPos = (height - i - 1) * (width * 4) + 4 * j;
+			size_t newPos = i * (width * 4) + 4 * j;
+			data[newPos] = pixels[oldPos];
+			data[newPos + 1] = pixels[oldPos + 1];
+			data[newPos + 2] = pixels[oldPos + 2];
+			data[newPos + 3] = (char)0xff;
+		}
+	}
+
+	lodepng::encode(png, data, width, height);
+	lodepng::save_file(png, "../screenshots/screen_" + to_string(saves) + ".png");
+
+	data.clear();
+	png.clear();
+	delete[] pixels;
+
+	saves++;
 }
 
 void Window::swapBuffers(){

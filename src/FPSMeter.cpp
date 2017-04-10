@@ -12,6 +12,7 @@
 FPSMeter::FPSMeter(){
 	glGenQueries(2, queryID);
 	first = true;
+	total = 0;
 }
 
 void FPSMeter::startTask(){
@@ -49,4 +50,8 @@ float FPSMeter::getRenderingTime(){
 
 float FPSMeter::getTotalTime(){
 	return total / 1000000000.0;
+}
+
+void FPSMeter::refreshTotalTime() {
+	total = 0;
 }

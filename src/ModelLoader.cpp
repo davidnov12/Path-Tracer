@@ -96,7 +96,7 @@ void ModelLoader::loadModel(string path, int mode){
 			
 			vector<vec3> verts;
 			vector<vec2> uvs;
-			vec3 normal;
+			vector<vec3> normal;
 
 			if (mode == VERTEX_UVS_NORMALS) {
 				sscanf_s(tmp.c_str(), "%d/%d/%d %d/%d/%d %d/%d/%d", indices, indices + 1, indices + 2,
@@ -117,7 +117,9 @@ void ModelLoader::loadModel(string path, int mode){
 				uvs.push_back(tex_coords.at(indices[4] - 1));
 				uvs.push_back(tex_coords.at(indices[7] - 1));
 
-				normal = (normals.at(indices[2] - 1) + normals.at(indices[5] - 1) + normals.at(indices[8] - 1)) / 3.0f;
+				normal.push_back((normals.at(indices[2] - 1)));
+				normal.push_back((normals.at(indices[5] - 1)));
+				normal.push_back((normals.at(indices[8] - 1)));
 
 				Triangle t(verts, uvs, normal);
 
@@ -135,9 +137,11 @@ void ModelLoader::loadModel(string path, int mode){
 				verts.push_back(vertices.at(indices[2] - 1));
 				verts.push_back(vertices.at(indices[4] - 1));
 
-				normal = (normals.at(indices[1] - 1) + normals.at(indices[3] - 1) + normals.at(indices[5] - 1)) / 3.0f;
+				normal.push_back((normals.at(indices[1] - 1)));
+				normal.push_back((normals.at(indices[3] - 1)));
+				normal.push_back((normals.at(indices[5] - 1)));
 
-				Triangle t(verts, uvs, normal);
+				Triangle t(verts, normal);
 
 				triangles.push_back(t);
 			}

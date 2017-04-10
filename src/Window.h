@@ -12,6 +12,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include "png/lodepng.h"
 
 using namespace std;
 
@@ -54,12 +55,17 @@ public:
 	bool isResized();
 	bool lightMove();
 
+	// Ulozeni snimku do png
+	void savePNG();
+
 private:
 
 	// Atributy okna
 	int width, height;
 	string title;
 	bool visible;
+
+	int saves = 0;
 
 	// Okno
 	GLFWwindow* window;

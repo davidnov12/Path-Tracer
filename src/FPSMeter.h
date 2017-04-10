@@ -22,6 +22,7 @@ public:
 	float getFPS();
 	float getRenderingTime();
 	float getTotalTime();
+	void refreshTotalTime();
 
 private:
 

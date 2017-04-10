@@ -20,19 +20,19 @@ class Triangle {
 public:
 
 	// Konstruktor
-	Triangle(vector<vec3> verts, vec3 norm);
-	Triangle(vector<vec3> verts, vector<vec2> uvs, vec3 norm);
+	Triangle(vector<vec3> verts, vector<vec3> norm);
+	Triangle(vector<vec3> verts, vector<vec2> uvs, vector<vec3> norm);
 
 	// Ziskani vrcholu a normaly trojuhelniku
 	vector<vec3> getVertices();
 	vector<vec2> getUVs();
-	vec3 getNormal();
+	vector<vec3> getNormals();
 
 private:
 
 	// Vrcholy a normala trojuhelniku
 	vector<vec3> vertices;
 	vector<vec2> tex_coords;
-	vec3 normal;
+	vector<vec3> normal;
 	
 };

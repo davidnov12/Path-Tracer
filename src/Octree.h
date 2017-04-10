@@ -1,11 +1,11 @@
 /*
-* Path tracing na GPU
-* Bakalarska prace
-* David Novak, xnovak1l
-* FIT VUT Brno, 2016
-*
-* Octree.h - trida pro praci s oktalovym stromem
-*/
+ * Path tracing na GPU
+ * Bakalarska prace
+ * David Novak, xnovak1l
+ * FIT VUT Brno, 2016
+ *
+ * Octree.h - trida pro praci s oktalovym stromem
+ */
 
 #pragma once
 
@@ -14,15 +14,13 @@
 #define LEFT -0.7
 #define RIGHT 0.7
 #define UP 0.7
-#define DOWN -0.5
+#define DOWN -0.65
 #define FRONT -0.9
 #define BACK 0.9
 
-<<<<<<< HEAD
-#define MAX_NODES 300
-=======
-#define MAX_NODES 15 * md.triangles_count
->>>>>>> origin/master
+#define MAX_NODES 2.5 * md.triangles_count
+
+using namespace std;
 
 class Octree {
 
@@ -44,32 +42,20 @@ public:
 	int getIndicesLength();
 	int getNodesCount();
 
-<<<<<<< HEAD
 //private:
-=======
-	//private:
->>>>>>> origin/master
 
 	void initOctree();
 	void buildOctree(Scene::Model md, int primitivesPerList);
 	bool isInBox(vec3 point, vec3 startBox, vec3 endBox);
 	void makeChilds(int index);
 	bool edgeBoxIntersection(vec4 origin, vec4 edge, vec3 boxStart, vec3 boxEnd);
+	//bool triangleBoxIntersection(vec3 v0, vec3 v1, vec3 v2, vec3 boxStart, vec3 boxEnd);
+	bool trinagleAABBIntersection(vec3 v0, vec3 v1, vec3 v2, vec3 boxStart, vec3 boxEnd);
 	bool uniqueIndices(int inserted, int nodeIndex);
 	void linkOctree();
 
-<<<<<<< HEAD
 	void print_tree();
 	void printVec(vec3 v);
-=======
-	void printTree();
-	void printVec(vec3 v);
-	void octreeTraversal(vec3 origin, vec3 dir);
-	void iterative(int node);
-	void printUsesLeafs();
-	int first_node(double tx0, double ty0, double tz0, double txm, double tym, double tzm);
-	int new_node(double txm, int x, double tym, int y, double tzm, int z);
->>>>>>> origin/master
 
 	Node* root;
 	vector<Node> nodes;
@@ -77,14 +63,7 @@ public:
 	vector<int> indices;
 	int nodes_count;
 
-<<<<<<< HEAD
 	Scene::Model mod;
 	float t = 5.2;
 	float tx0, ty0, tz0, tx1, ty1, tz1;
 };
-=======
-	float t = 5.2;
-	float tx0, ty0, tz0, tx1, ty1, tz1;
-
-};
->>>>>>> origin/master

@@ -23,6 +23,10 @@ vector<Sphere> Scene::getSpheres(){
 }
 
 Scene::Model Scene::getModel(int pos){
+	if (models.size() == 0) {
+		Scene::Model m = { nullptr, 0 };
+		return m;
+	}
 	return models.at(pos);
 }
 
@@ -51,11 +55,18 @@ void Scene::addModel(ModelLoader obj, vec3 color, float material){
 	int len = obj.getData().size();
 	Primitive* geometry = new Primitive[len];
 
+	cout << "Preparing scene..." << endl;
+
 	for (int a = 0; a < len; a++) {
+		//cout << a << "/" << len << endl;
 		geometry[a].vertex0 = vec4(obj.getData().at(a).getVertices().at(0), 1.0f);
 		geometry[a].vertex1 = vec4(obj.getData().at(a).getVertices().at(1), 1.0f);
 		geometry[a].vertex2 = vec4(obj.getData().at(a).getVertices().at(2), 1.0f);
-		geometry[a].normal = vec4(obj.getData().at(a).getNormal(), 1.0f);
+		geometry[a].normal0 = vec4(obj.getData().at(a).getNormals().at(0), 1.0f);
+		geometry[a].normal1 = vec4(obj.getData().at(a).getNormals().at(1), 1.0f);
+		geometry[a].normal2 = vec4(obj.getData().at(a).getNormals().at(2), 1.0f);
+		geometry[a].uv0_1 = vec4(obj.getData().at(a).getUVs().at(0), obj.getData().at(a).getUVs().at(1));
+		geometry[a].uv2 = vec4(obj.getData().at(a).getUVs().at(2), 1.0f, 1.0f);
 		geometry[a].color_mat = vec4(color, material);
 	}
 
@@ -65,6 +76,8 @@ void Scene::addModel(ModelLoader obj, vec3 color, float material){
 	obj.cleanData();
 
 	models.push_back(md);
+
+	cout << "Scene ready." << endl;
 }
 
 void Scene::addModel(Model mod){
@@ -102,8 +115,14 @@ void Scene::rotateObject(Model md, float angle, int axis){
 			md.data[i].vertex2.y = md.data[i].vertex2.y * cos_angle - md.data[i].vertex2.z * sin_angle;
 			md.data[i].vertex2.z = md.data[i].vertex2.y * sin_angle + md.data[i].vertex2.z * cos_angle;
 
-			md.data[i].normal.y = md.data[i].normal.y * cos_angle - md.data[i].normal.z * sin_angle;
-			md.data[i].normal.z = md.data[i].normal.y * sin_angle + md.data[i].normal.z * cos_angle;
+			md.data[i].normal0.y = md.data[i].normal0.y * cos_angle - md.data[i].normal0.z * sin_angle;
+			md.data[i].normal0.z = md.data[i].normal0.y * sin_angle + md.data[i].normal0.z * cos_angle;
+
+			md.data[i].normal1.y = md.data[i].normal1.y * cos_angle - md.data[i].normal1.z * sin_angle;
+			md.data[i].normal1.z = md.data[i].normal1.y * sin_angle + md.data[i].normal1.z * cos_angle;
+
+			md.data[i].normal2.y = md.data[i].normal2.y * cos_angle - md.data[i].normal2.z * sin_angle;
+			md.data[i].normal2.z = md.data[i].normal2.y * sin_angle + md.data[i].normal2.z * cos_angle;
 		}
 		else if (axis == Y_AXIS) {
 			md.data[i].vertex0.x = md.data[i].vertex0.x * cos_angle + md.data[i].vertex0.z * sin_angle;
@@ -115,8 +134,14 @@ void Scene::rotateObject(Model md, float angle, int axis){
 			md.data[i].vertex2.x = md.data[i].vertex2.x * cos_angle + md.data[i].vertex2.z * sin_angle;
 			md.data[i].vertex2.z = -md.data[i].vertex2.x * sin_angle + md.data[i].vertex2.z * cos_angle;
 
-			md.data[i].normal.x = md.data[i].normal.x * cos_angle + md.data[i].normal.z * sin_angle;
-			md.data[i].normal.z = -md.data[i].normal.x * sin_angle + md.data[i].normal.z * cos_angle;
+			md.data[i].normal0.x = md.data[i].normal0.x * cos_angle + md.data[i].normal0.z * sin_angle;
+			md.data[i].normal0.z = -md.data[i].normal0.x * sin_angle + md.data[i].normal0.z * cos_angle;
+
+			md.data[i].normal1.x = md.data[i].normal1.x * cos_angle + md.data[i].normal1.z * sin_angle;
+			md.data[i].normal1.z = -md.data[i].normal1.x * sin_angle + md.data[i].normal1.z * cos_angle;
+
+			md.data[i].normal2.x = md.data[i].normal2.x * cos_angle + md.data[i].normal2.z * sin_angle;
+			md.data[i].normal2.z = -md.data[i].normal2.x * sin_angle + md.data[i].normal2.z * cos_angle;
 		}
 		else if (axis == Z_AXIS) {
 			md.data[i].vertex0.x = md.data[i].vertex0.x * cos_angle - md.data[i].vertex0.y * sin_angle;
@@ -128,10 +153,18 @@ void Scene::rotateObject(Model md, float angle, int axis){
 			md.data[i].vertex2.x = md.data[i].vertex2.x * cos_angle - md.data[i].vertex2.y * sin_angle;
 			md.data[i].vertex2.y = md.data[i].vertex2.x * sin_angle + md.data[i].vertex2.y * cos_angle;
 
-			md.data[i].normal.x = md.data[i].normal.x * cos_angle - md.data[i].normal.y * sin_angle;
-			md.data[i].normal.y = md.data[i].normal.x * sin_angle + md.data[i].normal.y * cos_angle;
+			md.data[i].normal0.x = md.data[i].normal0.x * cos_angle - md.data[i].normal0.y * sin_angle;
+			md.data[i].normal0.y = md.data[i].normal0.x * sin_angle + md.data[i].normal0.y * cos_angle;
+
+			md.data[i].normal1.x = md.data[i].normal1.x * cos_angle - md.data[i].normal1.y * sin_angle;
+			md.data[i].normal1.y = md.data[i].normal1.x * sin_angle + md.data[i].normal1.y * cos_angle;
+
+			md.data[i].normal2.x = md.data[i].normal2.x * cos_angle - md.data[i].normal2.y * sin_angle;
+			md.data[i].normal2.y = md.data[i].normal2.x * sin_angle + md.data[i].normal2.y * cos_angle;
 		}
 
-		md.data[i].normal = normalize(md.data[i].normal);
+		md.data[i].normal0 = normalize(md.data[i].normal0);
+		md.data[i].normal1 = normalize(md.data[i].normal1);
+		md.data[i].normal2 = normalize(md.data[i].normal2);
 	}
 }

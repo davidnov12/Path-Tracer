@@ -33,7 +33,7 @@ public:
 	void setUniforms();
 
 	// Pohyb kamery
-	void cameraMove(float x, float y, float lx, float lz, bool resized, bool light_move);
+	void cameraMove(float x, float y, float lx, float lz, bool resized, bool light_move, bool* moved);
 
 	// Priprava kreslici textury
 	void setTextureFramebuffer();
@@ -62,7 +62,7 @@ public:
 private:
 
 	// Souradnice prumetny
-	vec3 screenCoords[6];
+	vec3 screenCoords[600];
 
 	// VAO, VBO
 	GLuint vao, vbo;

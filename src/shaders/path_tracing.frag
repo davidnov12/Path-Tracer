@@ -5,7 +5,7 @@
 #define LEFT -0.7
 #define RIGHT 0.7
 #define UP 0.7
-#define DOWN -0.5
+#define DOWN -0.65
 #define FRONT -0.9
 #define BACK 0.9
 
@@ -34,7 +34,12 @@ struct Triangle{
 	vec3 vertex0;
 	vec3 vertex1;
 	vec3 vertex2;
-	vec3 normal;
+	vec3 normal0;
+	vec3 normal1;
+	vec3 normal2;
+	vec2 uv0;
+	vec2 uv1;
+	vec2 uv2;
 	vec3 color;
 	float reflectivity;
 };
@@ -65,7 +70,7 @@ struct Node{
 struct OctreeContext{
 	float tx0; float ty0; float tz0;
 	float tx1; float ty1; float tz1;
-	int current; int node_id;
+	uint current; int node_id;
 	bool init;
 };
 
@@ -86,7 +91,7 @@ layout (std430, binding = 2) buffer node_indices{
 
 
 uniform Sphere spheres[4];
-uniform float randoms[100];
+uniform float randoms[30];
 uniform float sample_ID;
 uniform float stride;
 uniform vec3 light_pos;
@@ -100,11 +105,12 @@ in vec3 scr_coord;
 out vec4 color;
 
 bool light_source = false;
+bool soft_shadows = false;
 
-float ambient = 0.1;
-float diffuse = 0.9;
+float ambient = 0.05;
+float diffuse = 0.95;
 
-vec3 light_color = vec3(1.0);
+vec3 light_color = vec3(1.0, 1.0, 1.0);
 
 Ray original_ray;
 
@@ -154,6 +160,25 @@ vec3 convertToBNT(vec3 original, vec3 normal, vec3 tangent, vec3 bitangent){
 	return dir;	
 }
 
+int ab;
+
+// Funkce pro ziskani barycentrickych souradnic
+void barycentricInterpolation(Triangle tr, vec3 point, out vec3 bar_coords){
+	vec3 v0 = tr.vertex1 - tr.vertex0;
+	vec3 v1 = tr.vertex2 - tr.vertex0;
+	vec3 v2 = point - tr.vertex0;
+	
+	float d00 = dot(v0, v0);
+	float d01 = dot(v0, v1);
+	float d11 = dot(v1, v1);
+	float d20 = dot(v2, v0);
+	float d21 = dot(v2, v1);
+
+	float den = d00 * d11 - d11 * d01;
+	bar_coords.y = (d11 * d20 - d01 * d21) / den;
+	bar_coords.z = (d00 * d21 - d01 * d20) / den;
+	bar_coords.x = 1.0 - bar_coords.y - bar_coords.z;
+}
 
 // Prusecik paprsku s trojuhelnikem
 bool rayTriangleIntersection(Ray ray, Triangle tr, out Intersection inter){
@@ -180,10 +205,20 @@ bool rayTriangleIntersection(Ray ray, Triangle tr, out Intersection inter){
 	float b2 = dot(ray.direction, s2) * invdiv;
 	if (b2 < 0.0 || (b1 + b2) > 1.0) return false;	
 
+	
+
 	inter.dist = t;
 	inter.position = ray.position + t * ray.direction;
 	//inter.normal = normalize(cross(e1, e2));
-	inter.normal = tr.normal;
+	
+	vec3 bar_coords;
+	barycentricInterpolation(tr, inter.position, bar_coords);
+	inter.normal = normalize(tr.normal0 * bar_coords.x + tr.normal1 * bar_coords.y + tr.normal2 * bar_coords.z);
+	//inter.normal = (tr.normal0 + tr.normal1 + tr.normal2) / 3.0;
+	//vec2 uvs = tr.uv0 * bar_coords.x + tr.uv1 * bar_coords.y + tr.uv2 * bar_coords.z;
+	//inter.color = texture(tex, uvs);
+
+	//inter.normal = tr.normal;
 	inter.color = tr.color;
 	inter.reflectivity = tr.reflectivity;
 
@@ -234,10 +269,10 @@ bool rayBoxIntersection(Ray ray, out Intersection inter){
 	vec3 point;
 	//if(abs(t) < abs(closest)) closest = t;
 	if(ray.direction.y < 0.0){
-	planeHeight = DOWN;
+	planeHeight = DOWN + 0.2;
 	t = (planeHeight - ray.position.y) / ray.direction.y;
 	point = ray.position + (t * ray.direction);
-	if(point.z > FRONT && point.z < 2.0 && point.x > LEFT && point.x < RIGHT){
+	//if(point.z > FRONT && point.z < 2.0 && point.x > LEFT && point.x < RIGHT){
 			if(abs(t) < abs(closest)) {
 				closest = t;
 				inter.dist = t;
@@ -250,16 +285,16 @@ bool rayBoxIntersection(Ray ray, out Intersection inter){
 				
 				res = true;	
 			}
-		}
+		//}
 	}
 	
 	// Horni stena
 	if(ray.direction.y > 0.0){
-		planeHeight = UP;
+		planeHeight = UP - 0.15;
 		t = (planeHeight - ray.position.y) / ray.direction.y;
 		point = ray.position + (t * ray.direction);
 	
-		if(point.z > FRONT && point.z < 2.0 && point.x > LEFT && point.x < RIGHT){
+		//if(point.z > FRONT && point.z < 2.0 && point.x > LEFT && point.x < RIGHT){
 			if(abs(t) < abs(closest)){ 
 				closest = t;
 				inter.dist = t;
@@ -276,7 +311,7 @@ bool rayBoxIntersection(Ray ray, out Intersection inter){
 
 				res = true;
 			}
-		}
+		//}
 	}
 
 	// Leva stena
@@ -285,7 +320,7 @@ bool rayBoxIntersection(Ray ray, out Intersection inter){
 		t = (planeHeight - ray.position.x) / ray.direction.x;
 		point = ray.position + (t * ray.direction);
 	
-		if(point.z > FRONT && point.z < 2.0 && point.y > DOWN && point.y < UP){
+		//if(point.z > FRONT && point.z < 2.0 && point.y > DOWN && point.y < UP){
 			if(t < closest){ 
 				closest = t;
 				inter.dist = t;
@@ -296,7 +331,7 @@ bool rayBoxIntersection(Ray ray, out Intersection inter){
 				inter.reflectivity = 0.1;
 				res = true;	
 			}
-		}
+		//}
 	}
 
 	// Prava stena
@@ -305,7 +340,7 @@ bool rayBoxIntersection(Ray ray, out Intersection inter){
 		t = (planeHeight - ray.position.x) / ray.direction.x;
 		point = ray.position + (t * ray.direction);
 	
-		if(point.z > FRONT && point.z < 2.0 && point.y > DOWN && point.y < UP){
+		//if(point.z > FRONT && point.z < 2.0 && point.y > DOWN && point.y < UP){
 			if(t < closest){
 				closest = t;
 				inter.dist = t;
@@ -315,7 +350,7 @@ bool rayBoxIntersection(Ray ray, out Intersection inter){
 				inter.reflectivity = 0.1;
 				res = true;	
 			}
-		}
+		//}
 	}
 
 	// Predni stena
@@ -324,7 +359,7 @@ bool rayBoxIntersection(Ray ray, out Intersection inter){
 		t = (planeHeight - ray.position.z) / ray.direction.z;
 		point = ray.position + (t * ray.direction);
 	
-		if(point.x > LEFT && point.x < RIGHT && point.y > DOWN && point.y < UP){
+		//if(point.x > LEFT && point.x < RIGHT && point.y > DOWN && point.y < UP){
 			if(t < closest){
 				closest = t;
 				inter.dist = t;
@@ -335,7 +370,7 @@ bool rayBoxIntersection(Ray ray, out Intersection inter){
 				inter.reflectivity = 0.1;
 				res = true;
 			}
-		}
+		//}
 	}
 
 	return res;
@@ -345,31 +380,31 @@ bool rayBoxIntersection(Ray ray, out Intersection inter){
 
 // Octree
 
-uint a;
-float tx0, ty0, tz0, tx1, ty1, tz1;
+//uint fg;
+//float tx0, ty0, tz0, tx1, ty1, tz1;
 
 // Prvni zasazeny uzel
-int firstNode(float tx0, float ty0, float tz0, float txm, float tym, float tzm) {
+uint firstNode(float tx0, float ty0, float tz0, float txm, float tym, float tzm) {
 	uint answer = 0;
 							
 	if (tx0 > ty0) {
 		if (tx0 > tz0) { // PLANE YZ
 			if (tym < tx0) answer |= 2;    
 			if (tzm < tx0) answer |= 1;    
-			return int(answer);
+			return answer;
 		}
 	}
-	else {
-		if (ty0 > tz0) { // PLANE XZ
+
+	else if (ty0 > tz0) { // PLANE XZ
 			if (txm < ty0) answer |= 4;    
 			if (tzm < ty0) answer |= 1; 
-			return int(answer);
-		}
+			return answer;
 	}
+
 	// PLANE XY
 	if (txm < tz0) answer |= 4;    
 	if (tym < tz0) answer |= 2;    
-	return int(answer);
+	return answer;
 }
 
 
@@ -378,53 +413,80 @@ int nextNode(float txm, int x, float tym, int y, float tzm, int z) {
 	if (txm < tym) {
 		if (txm < tzm) return x;   
 	}
+
 	else {
 		if (tym < tzm) return y; 
 	}
+
 	return z;
 }
 
-
 // Pruchod Octree
-bool iterativeTraversal(Ray ray, int node, out Intersection inters) {
-	int current;
+bool iterativeTraversal(Ray ray, float tx0, float tx1, float ty0, float ty1, float tz0, float tz1, uint fg, int node, out Intersection inters) {
+	uint current;
 	float txm, tym, tzm;
 	bool init = false, res = false;
 	OctreeContext context;
-	OctreeContext states[10];
+	OctreeContext states[12];
 	float closest = 100.0;
 	int sp = 0;
 	int cycles = 0;
+	//float closest = 10.0;
 
 	do{
 		cycles += 1;
 		
+
+		if (tx1 < 0 || ty1 < 0 || tz1 < 0) {
+			sp -= 1;
+			if (sp < 0) {
+				break;
+			}
+
+			tx0 = states[sp].tx0;
+			ty0 = states[sp].ty0;
+			tz0 = states[sp].tz0;
+			tx1 = states[sp].tx1;
+			ty1 = states[sp].ty1;
+			tz1 = states[sp].tz1;
+			current = states[sp].current;
+			node = states[sp].node_id;
+			init = states[sp].init;
+			txm = 0.5 * (tx0 + tx1);
+			tym = 0.5 * (ty0 + ty1);
+			tzm = 0.5 * (tz0 + tz1);
+		}
+		
+		//if(node == 20) ab = 12;
 		if (nodes[node].leaf == 1) {
-			
 				
+			
+			//if(node == 6) ab = 10;
+
 			if (nodes[node].count != 0) {
-	
+
 				Intersection inter;
-				//for(int i = 0; i < triangles_count; i++){
 				for(int i = 0; i < nodes[node].count; i++){
-					//if(rayTriangleIntersection(original_ray, triangles[i], inter)){
+					
 					if(rayTriangleIntersection(original_ray, triangles[indices[nodes[node].index + i]], inter)){	
-						if(!res || inter.dist < inters.dist){
-						//if(i == 12) abc = true;
+						
+						if(!res || inter.dist < closest){
+						
+							closest = inter.dist;
 							res = true;
 							inters = inter;
+							
 						}
 					}
 				}
-
+				
 				if(res) return true;
+				
 			}
 
 			sp -= 1;
 			if (sp < 0) {
 				break;
-				//node_id = node;
-				//return false;
 			}
 
 			tx0 = states[sp].tx0;
@@ -439,32 +501,13 @@ bool iterativeTraversal(Ray ray, int node, out Intersection inters) {
 		}
 
 		
-		if (tx1 < 0 || ty1 < 0 || tz1 < 0) {
-			sp -= 1;
-			if (sp < 0) {
-				break;
-				//node_id = node;
-				//return false;
-			}
-			tx0 = states[sp].tx0;
-			ty0 = states[sp].ty0;
-			tz0 = states[sp].tz0;
-			tx1 = states[sp].tx1;
-			ty1 = states[sp].ty1;
-			tz1 = states[sp].tz1;
-			current = states[sp].current;
-			node = states[sp].node_id;
-			init = states[sp].init;
-		}
-
-
 		txm = 0.5f * (tx0 + tx1);
 		tym = 0.5f * (ty0 + ty1);
 		tzm = 0.5f * (tz0 + tz1);
 
 
 		if (!init) {
-			init = !init;
+			init = true;
 			current = firstNode(tx0, ty0, tz0, txm, tym, tzm);
 		}
 
@@ -476,54 +519,54 @@ bool iterativeTraversal(Ray ray, int node, out Intersection inters) {
 		context.ty1 = ty1;
 		context.tz1 = tz1;
 		context.node_id = node;
-		context.init = true;
+		context.init = init;
 		init = false;
 
 		switch (current) {
 		case 0:
-			node = nodes[node].childs[a];
+			node = nodes[node].childs[fg];
 			context.current = nextNode(txm, 4, tym, 2, tzm, 1);
 			tx1 = txm; ty1 = tym; tz1 = tzm;
 			break;
 
 		case 1:
-			node = nodes[node].childs[1 ^ a];
+			node = nodes[node].childs[fg ^ 1];
 			context.current = nextNode(txm, 5, tym, 3, tz1, 8);
 			tx1 = txm; ty1 = tym; tz0 = tzm;
 			break;
 
 		case 2:
-			node = nodes[node].childs[2 ^ a];
+			node = nodes[node].childs[fg ^ 2];
 			context.current = nextNode(txm, 6, ty1, 8, tzm, 3);
 			tx1 = txm; ty0 = tym; tz1 = tzm;
 			break;
 
 		case 3:
-			node = nodes[node].childs[3 ^ a];
+			node = nodes[node].childs[fg ^ 3];
 			context.current = nextNode(txm, 7, ty1, 8, tz1, 8);
 			tx1 = txm; ty0 = tym; tz0 = tzm;
 			break;
 
 		case 4:
-			node = nodes[node].childs[4 ^ a];
+			node = nodes[node].childs[fg ^ 4];
 			context.current = nextNode(tx1, 8, tym, 6, tzm, 5);
 			tx0 = txm; ty1 = tym; tz1 = tzm;
 			break;
 
 		case 5:
-			node = nodes[node].childs[5 ^ a];
+			node = nodes[node].childs[fg ^ 5];
 			context.current = nextNode(tx1, 8, tym, 7, tz1, 8);
 			tx0 = txm; ty1 = tym; tz0 = tzm;
 			break;
 
 		case 6:
-			node = nodes[node].childs[6 ^ a];
+			node = nodes[node].childs[fg ^ 6];
 			context.current = nextNode(tx1, 8, ty1, 8, tzm, 7);
 			tx0 = txm; ty0 = tym; tz1 = tzm;
 			break;
 
 		case 7:
-			node = nodes[node].childs[7 ^ a];
+			node = nodes[node].childs[fg ^ 7];
 			context.current = 8;
 			tx0 = txm; ty0 = tym; tz0 = tzm;
 			break;
@@ -535,8 +578,6 @@ bool iterativeTraversal(Ray ray, int node, out Intersection inters) {
 
 				sp -= 1;
 				if (sp < 0) {
-					//result = -1;
-					//node_id = node;
 					return false;
 				}
 
@@ -556,49 +597,49 @@ bool iterativeTraversal(Ray ray, int node, out Intersection inters) {
 				switch (current) {
 
 				case 0:
-					node = nodes[node].childs[a];
+					node = nodes[node].childs[fg];
 					context.current = nextNode(txm, 4, tym, 2, tzm, 1);
 					tx1 = txm; ty1 = tym; tz1 = tzm;
 					break;
 
 				case 1:
-					node = nodes[node].childs[1 ^ a];
+					node = nodes[node].childs[1 ^ fg];
 					context.current = nextNode(txm, 5, tym, 3, tz1, 8);
 					tx1 = txm; ty1 = tym; tz0 = tzm;
 					break;
 
 				case 2:
-					node = nodes[node].childs[2 ^ a];
+					node = nodes[node].childs[2 ^ fg];
 					context.current = nextNode(txm, 6, ty1, 8, tzm, 3);
 					tx1 = txm; ty0 = tym; tz1 = tzm;
 					break;
 
 				case 3:
-					node = nodes[node].childs[3 ^ a];
+					node = nodes[node].childs[3 ^ fg];
 					context.current = nextNode(txm, 7, ty1, 8, tz1, 8);
 					tx1 = txm; ty0 = tym; tz0 = tzm;
 					break;
 
 				case 4:
-					node = nodes[node].childs[4 ^ a];
+					node = nodes[node].childs[4 ^ fg];
 					context.current = nextNode(tx1, 8, tym, 6, tzm, 5);
 					tx0 = txm; ty1 = tym; tz1 = tzm;
 					break;
 
 				case 5:
-					node = nodes[node].childs[5 ^ a];
+					node = nodes[node].childs[5 ^ fg];
 					context.current = nextNode(tx1, 8, tym, 7, tz1, 8);
 					tx0 = txm; ty1 = tym; tz0 = tzm;
 					break;
 
 				case 6:
-					node = nodes[node].childs[6 ^ a];
+					node = nodes[node].childs[6 ^ fg];
 					context.current = nextNode(tx1, 8, ty1, 8, tzm, 7);
 					tx0 = txm; ty0 = tym; tz1 = tzm;
 					break;
 
 				case 7:
-					node = nodes[node].childs[7 ^ a];
+					node = nodes[node].childs[7 ^ fg];
 					context.current = 8;
 					tx0 = txm; ty0 = tym; tz0 = tzm;
 					break;
@@ -615,12 +656,14 @@ bool iterativeTraversal(Ray ray, int node, out Intersection inters) {
 
 	} while (sp >= 0 && cycles < 30);
 
+	
 	return res;
 }
 
 // Hlavni funkce pro pruchod Octree
 bool octreeTraversal(Ray ray, out Intersection inters) {
-	a = 0;
+	uint fg = 0;
+	float tx0, ty0, tz0, tx1, ty1, tz1;
 
 	original_ray.direction = ray.direction;
 	original_ray.position = ray.position;
@@ -631,25 +674,25 @@ bool octreeTraversal(Ray ray, out Intersection inters) {
 	if (ray.direction.x < 0.0) {
 		tmp_ray.position.x = (RIGHT + LEFT) - ray.position.x;
 		tmp_ray.direction.x *= -1.0;
-		a |= 4;
+		fg |= 4;
 	}
 
 	if (ray.direction.y < 0.0) {
 		tmp_ray.position.y = (UP + DOWN) - ray.position.y;
 		tmp_ray.direction.y *= -1.0;
-		a |= 2;
+		fg |= 2;
 	}
 
 	if (ray.direction.z > 0.0) {
 		tmp_ray.position.z = (BACK + FRONT) - ray.position.z;
 		tmp_ray.direction.z *= -1.0;
-		a |= 1;
+		fg |= 1;
 	}
-
-	/*if (ray.direction.x == 0.0) tmp_ray.direction.x = 0.000000000001f;
+/*
+	if (ray.direction.x == 0.0) tmp_ray.direction.x = 0.000000000001f;
 	if (ray.direction.y == 0.0) tmp_ray.direction.y = 0.000000000001f;
-	if (ray.direction.z == 0.0) tmp_ray.direction.z = -0.000000000001f;*/
-
+	if (ray.direction.z == 0.0) tmp_ray.direction.z = -0.000000000001f;
+	*/
 	float invDirx = 1.0 / tmp_ray.direction.x;
 	float invDiry = 1.0 / tmp_ray.direction.y;
 	float invDirz = 1.0 / tmp_ray.direction.z;
@@ -664,13 +707,17 @@ bool octreeTraversal(Ray ray, out Intersection inters) {
 	tz1 = (FRONT - tmp_ray.position.z) * invDirz;
 	
 	Intersection inter;
-
-	if(max(tx0, max(ty0, tz0)) < min(tx1, min(ty1, tz1)))
-		if(iterativeTraversal(tmp_ray, 0, inter)){
+	
+	//ab = 11;
+	
+	if(max(tx0, max(ty0, tz0)) < min(tx1, min(ty1, tz1))){
+		//ab = 10;
+		if(iterativeTraversal(tmp_ray, tx0, tx1, ty0, ty1, tz0, tz1, fg, 0, inter)){
 			inters = inter;
 			return true;
 		}
-
+	}
+	
 	return false;
 }
 
@@ -704,11 +751,28 @@ bool calculCollision(Ray ray, out Intersection inter, bool shadow){
 		}
 	}
 
+	/*for(int j = 49; j < 57; j++){
+		if(nodes[j].leaf == 1){
+			for(int i = 0; i < nodes[j].count; i++){
+				//ab = 112;
+				if(rayTriangleIntersection(ray, triangles[indices[nodes[j].index + i]], coll)){
+					if(!intersect || coll.dist < inter.dist){
+						intersect = true;
+						inter = coll;
+					}
+				}
+			}
+		}
+		//if(j > 100) ab = 112;
+	}*/
+
 	// Octree
-	if(octreeTraversal(ray, coll)){
-		if(!intersect || coll.dist < inter.dist){
+	if(triangles_count > 0){
+		if(octreeTraversal(ray, coll)){
+			if(!intersect || coll.dist < inter.dist){
 				intersect = true;
 				inter = coll;
+			}
 		}
 	}
 	
@@ -726,21 +790,24 @@ bool calculCollision(Ray ray, out Intersection inter, bool shadow){
 	return intersect;
 }
 
-
+// Vypocet osvetleni v bode
 vec3 directLight(vec3 position, vec3 normal, vec3 color){
+  
   vec3 direct = vec3(0.0);
-  vec3 light_dir = normalize(light_pos - position);
-
+  vec3 light_dir;
   Ray light_ray;
+  Intersection inter;
+  bool shadow;
+
+  //vec3 random_offset;
+  vec3 random_offset = vec3((0.4 * randoms[int(gl_FragCoord.x * gl_FragCoord.y * 2.7 * sample_ID) % 30])-0.2, 0.0, (0.4 * randoms[int(gl_FragCoord.x * gl_FragCoord.y * 2.2 * sample_ID) % 30])-0.2);
+  light_dir = normalize((light_pos + random_offset) - position);
   light_ray.position = position;
   light_ray.direction = light_dir;
-
-  Intersection inter;
-  bool shadow = calculCollision(light_ray, inter, true);
-  direct = (ambient * color) + ((shadow? min(inter.dist * 4.9, 0.1) : 1) * max(dot(light_dir, normal), 0.0) * color * diffuse * light_color);
-  
-  //if(shadow) direct = vec3(1, 1, 0);
-
+  float len = length(light_pos - position);
+  shadow = calculCollision(light_ray, inter, true);
+  direct = (ambient * color) + ((shadow? min(inter.dist * 4.9, 0.1) : 1) * max(dot(light_dir, normal), 0.0) * color * diffuse * light_color * (1.0 / (len * 1.1)));
+ 
   return direct;
 }
 
@@ -794,11 +861,13 @@ vec3 pathTrace(Ray original_ray){
 			// Osvetleni v bode
 			point_color = directLight(inter.position, inter.normal, inter.color);
 
+			//return point_color;
+
 			// barva * BRDF(difuzni)
 			ray_color = (ray_color / PI + 2 * point_color) * albedo;
 
 			// Konec cesty -> navrat vysledne barvy
-			if(randoms[int(gl_FragCoord.x * gl_FragCoord.y * sample_ID) % 100] > (max(color.r, max(color.g, color.b)))){
+			if(randoms[int(gl_FragCoord.x * gl_FragCoord.y * sample_ID) % 30] > (max(color.r, max(color.g, color.b)))){
 				ray_color *= 1.12;
 				break;	
 			}			
@@ -811,8 +880,8 @@ vec3 pathTrace(Ray original_ray){
 			}
   
 			// Vygenerovani nahodneho smeru odrazu
-			float rand1 = randoms[int(gl_FragCoord.x * gl_FragCoord.y * 2.7 * sample_ID) % 100];
-			float rand2 = randoms[int(gl_FragCoord.x * gl_FragCoord.y * 1.3 * sample_ID) % 100];
+			float rand1 = randoms[int(gl_FragCoord.x * gl_FragCoord.y * 2.7 * sample_ID) % 30];
+			float rand2 = randoms[int(gl_FragCoord.x * gl_FragCoord.y * 1.3 * sample_ID) % 30];
 			vec3 refl_dir = randomDirection(rand1, rand2);
 			refl_dir = convertToBNT(refl_dir, inter.normal, inter.tangent, inter.bitangent);
 
@@ -860,7 +929,7 @@ vec3 pathTrace(Ray original_ray){
 			ray_color += 0.3 * directLight(ii.position, ii.normal, ii.color);;
 
 			// Konec cesty -> navrat vysledne barvy
-			if(randoms[int(gl_FragCoord.x * gl_FragCoord.y * sample_ID) % 100] > (max(color.r, max(color.g, color.b)))){
+			if(randoms[int(gl_FragCoord.x * gl_FragCoord.y * sample_ID) % 30] > (max(color.r, max(color.g, color.b)))){
 				ray_color *= 1.17;
 				break;
 			}
@@ -869,8 +938,8 @@ vec3 pathTrace(Ray original_ray){
 			calcTB(inter.normal, tangent, bitangent);
   
 			// Vygenerovani nahodneho smeru odrazu
-			float rand1 = randoms[int(gl_FragCoord.x * gl_FragCoord.y * 2.7 * sample_ID) % 100];
-			float rand2 = randoms[int(gl_FragCoord.x * gl_FragCoord.y * 1.3 * sample_ID) % 100];
+			float rand1 = randoms[int(gl_FragCoord.x * gl_FragCoord.y * 2.7 * sample_ID) % 30];
+			float rand2 = randoms[int(gl_FragCoord.x * gl_FragCoord.y * 1.3 * sample_ID) % 30];
 			vec3 refl_dir = randomDirection(rand1, rand2);
 			refl_dir = convertToBNT(refl_dir, inter.normal, tangent, bitangent);
 
@@ -887,6 +956,8 @@ vec3 pathTrace(Ray original_ray){
 
 
 void main(){
+
+	ab = 5;
 
 	// Smer paprsku
 	vec3 ray_dir = vec3(scr_coord - view_pos);

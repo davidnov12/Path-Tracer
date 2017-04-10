@@ -34,7 +34,11 @@ public:
 		vec4 vertex0;
 		vec4 vertex1;
 		vec4 vertex2;
-		vec4 normal;
+		vec4 normal0;
+		vec4 normal1;
+		vec4 normal2;
+		vec4 uv0_1;
+		vec4 uv2;
 		vec4 color_mat;
 	} Primitive;
 

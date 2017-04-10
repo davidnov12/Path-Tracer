@@ -9,12 +9,15 @@
 
 #include "Triangle.h"
 
-Triangle::Triangle(vector<vec3> verts, vec3 norm){
+Triangle::Triangle(vector<vec3> verts, vector<vec3> norm){
 	vertices = verts;
+	tex_coords.push_back(vec2(-2.0f));
+	tex_coords.push_back(vec2(-2.0f));
+	tex_coords.push_back(vec2(-2.0f));
 	normal = norm;
 }
 
-Triangle::Triangle(vector<vec3> verts, vector<vec2> uvs, vec3 norm){
+Triangle::Triangle(vector<vec3> verts, vector<vec2> uvs, vector<vec3> norm){
 	vertices = verts;
 	tex_coords = uvs;
 	normal = norm;
@@ -28,6 +31,7 @@ vector<vec2> Triangle::getUVs(){
 	return tex_coords;
 }
 
-vec3 Triangle::getNormal(){
+vector<vec3> Triangle::getNormals()
+{
 	return normal;
 }

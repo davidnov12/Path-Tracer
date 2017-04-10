@@ -22,12 +22,43 @@ Render::Render(Shader* program, Scene* scene, Camera* cam, Octree* tree){
 	octree = tree;
 
 	// Nastaveni souradnic prumetny
-	screenCoords[0] = vec3(-1.0, -1.0, -0.5);
+	/*screenCoords[0] = vec3(-1.0, -1.0, -0.5);
 	screenCoords[1] = vec3(-1.0, 1.0, -0.5);
 	screenCoords[2] = vec3(1.0, -1.0, -0.5);
 	screenCoords[3] = vec3(1.0, -1.0, -0.5);
 	screenCoords[4] = vec3(1.0, 1.0, -0.5);
-	screenCoords[5] = vec3(-1.0, 1.0, -0.5);
+	screenCoords[5] = vec3(-1.0, 1.0, -0.5);*/
+
+	screenCoords[0] = vec3(-.1, -.1, -0.5);
+	screenCoords[1] = vec3(-.1, .1, -0.5);
+	screenCoords[2] = vec3(.1, -.1, -0.5);
+	screenCoords[3] = vec3(.1, -.1, -0.5);
+	screenCoords[4] = vec3(.1, .1, -0.5);
+	screenCoords[5] = vec3(-.1, .1, -0.5);
+
+	float cx = -1.0, cy = 1.0;
+	int i = 0;
+
+	for (int y = 0; y < 10; y++) {
+
+		for (int x = 0; x < 10; x++) {
+			
+			screenCoords[(i * 6)] = vec3(cx, cy - 0.2, -0.5);
+			screenCoords[(i * 6) + 1] = vec3(cx, cy, -0.5);
+			screenCoords[(i * 6) + 2] = vec3(cx + 0.2, cy - 0.2, -0.5);
+			screenCoords[(i * 6) + 3] = vec3(cx + 0.2, cy - 0.2, -0.5);
+			screenCoords[(i * 6) + 4] = vec3(cx + 0.2, cy, -0.5);
+			screenCoords[(i * 6) + 5] = vec3(cx, cy, -0.5);
+
+			//cout << cx << " " << cy << endl;
+
+			i += 1;
+			cx += 0.2;
+		}
+		cx = -1.0;
+		cy -= 0.2;
+	}
+	
 
 	createBuffers();
 /*
@@ -53,21 +84,28 @@ Render::Render(Shader* program, Scene* scene, Camera* cam, Octree* tree){
 
 void Render::updateScene(){
 
+	if(scene->modelsCount() != 0){
 	// Trojuhelniky
-	GLuint geom_buff;
-	glGenBuffers(1, &geom_buff);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, geom_buff);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Scene::Primitive) * scene->getModel(0).triangles_count, scene->getModel(0).data, GL_STATIC_DRAW);
+		GLuint geom_buff;
+		glGenBuffers(1, &geom_buff);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, geom_buff);
+		glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Scene::Primitive) * scene->getModel(0).triangles_count, scene->getModel(0).data, GL_STATIC_DRAW);
+	}
 
-	GLuint nodes_buff;
-	glGenBuffers(1, &nodes_buff);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, nodes_buff);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Octree::Node) * octree->getNodesCount(), octree->getNodes(), GL_STATIC_DRAW);
+	if (octree->getNodesCount() != 0) {
+		//cout << "BUFF\n";
+		GLuint nodes_buff;
+		glGenBuffers(1, &nodes_buff);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, nodes_buff);
+		glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Octree::Node) * octree->getNodesCount(), octree->getNodes(), GL_STATIC_DRAW);
+	}
 
-	GLuint indices_buff;
-	glGenBuffers(1, &indices_buff);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, indices_buff);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(int) * octree->getIndicesLength(), octree->getIndices(), GL_STATIC_DRAW);
+	if(octree->getNodesCount() != 0){
+		GLuint indices_buff;
+		glGenBuffers(1, &indices_buff);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, indices_buff);
+		glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(int) * octree->getIndicesLength(), octree->getIndices(), GL_STATIC_DRAW);
+	}
 /*
 	Octree::Node datas[2];
 	datas[0].childs[0] = 1.0;
@@ -153,16 +191,19 @@ void Render::setUniforms(){
 	
 }
 
-void Render::cameraMove(float x, float y, float lx, float lz, bool resized, bool light_move) {
+void Render::cameraMove(float x, float y, float lx, float lz, bool resized, bool light_move, bool* moved) {
 	
+	*moved = false;
+
 	if (x != last_x || y != last_y || resized || light_move) {
 		glClear(GL_COLOR_BUFFER_BIT);
 		id = 2.0;
 		step = stride;
 		last_x = x;
 		last_y = y;
+		*moved = true;
 	}
-	glUniform1i(glGetUniformLocation(program->getProgram(), "triangles_count"), scene->getModel(0).triangles_count);
+	/*if(scene->modelsCount() != 0)*/ glUniform1i(glGetUniformLocation(program->getProgram(), "triangles_count"), scene->getModel(0).triangles_count);
 	glUniform3f(glGetUniformLocation(program->getProgram(), "view_pos"), (camera->getPosition().x) + x, (camera->getPosition().y) + y, camera->getPosition().z);
 	glUniform3f(glGetUniformLocation(program->getProgram(), "light_pos"), (scene->getLight().x) + lx, scene->getLight().y, (scene->getLight().z) + lz);
 }
@@ -205,7 +246,7 @@ void Render::draw(float w, float h){
 	
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-	for (int i = 0; i < 100; i++) {
+	for (int i = 0; i < 30; i++) {
 		string s = "randoms[" + to_string(i) + "]";
 		glUniform1f(glGetUniformLocation(program->getProgram(), s.c_str()), uniGen(gen));
 	}
@@ -228,19 +269,14 @@ void Render::draw(float w, float h){
 	// Nastaveni programu
 	program->useProgram();
 
-	//setUniforms();
-	//glActiveTexture(GL_TEXTURE0);
-	//glBindTexture(GL_TEXTURE_2D, screen);
-	//glUniform1i(glGetUniformLocation(program->getProgram(), "frame"), 0);
-	//glBindFramebuffer(GL_FRAMEBUFFER, frame);
 	glBindVertexArray(vao);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
-	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	/*
-	display.useProgram();
 	
-	glDrawArrays(GL_POINTS, 0, 1);*/
+	for (int i = 0; i < 100; i++) {
+		glDrawArrays(GL_TRIANGLES, i * 6, 6);
+	}
+	//glDrawArrays(GL_TRIANGLES, 0, 6);
+	
+	glBindVertexArray(0);
 
 }
 
