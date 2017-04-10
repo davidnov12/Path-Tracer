@@ -18,9 +18,13 @@
 #define FRONT -0.9
 #define BACK 0.9
 
+<<<<<<< HEAD
 #define MAX_NODES 2.5 * md.triangles_count
 
 using namespace std;
+=======
+#define MAX_NODES 300
+>>>>>>> origin/master
 
 class Octree {
 
@@ -66,4 +70,8 @@ public:
 	Scene::Model mod;
 	float t = 5.2;
 	float tx0, ty0, tz0, tx1, ty1, tz1;
+<<<<<<< HEAD
 };
+=======
+};
+>>>>>>> origin/master
