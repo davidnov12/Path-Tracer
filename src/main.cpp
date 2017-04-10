@@ -19,7 +19,6 @@
 #define DEFAULT_WIDTH 600
 #define DEFAULT_HEIGHT 600
 
-<<<<<<< HEAD
 #define SPHERE_SCENE 1
 #define BUNNY_SCENE 2
 #define DEER_SCENE 3
@@ -42,15 +41,6 @@ int main() {
 	int sc;
 	cin >> sc;
 
-=======
-#define BUNNY_SCENE 1
-//#define HOUSE_SCENE 1
-
-char title[100];
-
-
-int main() {
->>>>>>> origin/master
 	Window window(DEFAULT_WIDTH, DEFAULT_HEIGHT, "Path Tracing", true);
 	FPSMeter fps;
 	Shader path;
