@@ -16,6 +16,7 @@
 #include "Scene.h"
 #include "Camera.h"
 #include "Octree.h"
+#include "Window.h"
 
 using namespace glm;
 
@@ -45,7 +46,7 @@ public:
 	float getSamples();
 
 	// Kresleni sceny
-	void draw(float w, float h);
+	void draw(float w, float h, Window* win);
 
 	// Uvolneni dat
 	void finish();

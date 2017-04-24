@@ -177,6 +177,17 @@ void Render::updateScene(){
 
 void Render::setUniforms(){
 
+	for (int i = 0; i < 5; i++) {
+		string s = "cornell_box.walls[" + to_string(i) + "]";
+		glUniform1f(glGetUniformLocation(program->getProgram(), s.c_str()), scene->getBox().walls[i]);
+		s = "cornell_box.colors[" + to_string(i) + "]";
+		glUniform3f(glGetUniformLocation(program->getProgram(), s.c_str()), scene->getBox().colors[i].r, scene->getBox().colors[i].g, scene->getBox().colors[i].b);
+		s = "cornell_box.normals[" + to_string(i) + "]";
+		glUniform3f(glGetUniformLocation(program->getProgram(), s.c_str()), scene->getBox().normals[i].x, scene->getBox().normals[i].y, scene->getBox().normals[i].z);
+		s = "cornell_box.reflectivity[" + to_string(i) + "]";
+		glUniform1f(glGetUniformLocation(program->getProgram(), s.c_str()), scene->getBox().reflectivity[i]);
+	}
+
 	// Objekty sceny
 	for (int i = 0; i < scene->getSpheres().size(); i++) {
 		string s = "spheres[" + to_string(i) + "].center";
@@ -242,7 +253,7 @@ float Render::getSamples(){
 }
 
 
-void Render::draw(float w, float h){
+void Render::draw(float w, float h, Window* win){
 	
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -260,11 +271,11 @@ void Render::draw(float w, float h){
 	id += stride;
 	step += stride;
 
-	if ((id - stride) >= 5000.0) {
+	/*if ((id - stride) >= 5000.0) {
 		id = 0.0;
 		step = stride;
 		glClear(GL_COLOR_BUFFER_BIT);
-	}
+	}*/
 
 	// Nastaveni programu
 	program->useProgram();
@@ -273,7 +284,10 @@ void Render::draw(float w, float h){
 	
 	for (int i = 0; i < 100; i++) {
 		glDrawArrays(GL_TRIANGLES, i * 6, 6);
+		
+		//win->swapBuffers();
 	}
+	win->swapBuffers();
 	//glDrawArrays(GL_TRIANGLES, 0, 6);
 	
 	glBindVertexArray(0);

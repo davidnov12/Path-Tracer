@@ -50,7 +50,7 @@ int main() {
 	
 
 	if(sc == SPHERE_SCENE) {
-		Sphere r(0.032, vec3(-0.15, 0.07, -0.45), vec3(0.99f, 0.99f, 0.99f), SPECULAR_MAT);
+		Sphere r(0.032, vec3(-0.15, 0.07, -0.45), vec3(0.99f, 0.99f, 0.99f), SPECULAR_MAT + 0.5);
 		Sphere s(0.032, vec3(-0.15, -0.28, -0.45), vec3(0.99f, 0.99f, 0.99f), DIFFUSE_MAT);
 		Sphere p(0.052, vec3(0.27, -0.22, 0.02), vec3(0.99f, 0.99f, 0.99f), DIFFUSE_MAT);
 		Sphere q(0.042, vec3(-0.42, -0.24, -0.04), vec3(0.99f, 0.99f, 0.99f), MIRROR_MAT);
@@ -64,7 +64,7 @@ int main() {
 		cornell.addModel(ml, vec3(0.99f), DIFFUSE_MAT);
 		cornell.scaleObject(cornell.getModel(0), vec3(0.13f));
 		cornell.translateObject(cornell.getModel(0), vec3(0.2f, -0.58f, -0.05f));
-		Sphere q(0.042, vec3(-0.42, -0.24, -0.04), vec3(0.99f, 0.99f, 0.99f), MIRROR_MAT);
+		Sphere q(0.042, vec3(-0.42, -0.24, -0.04), vec3(0.99f, 0.99f, 0.99f), DIFFUSE_MAT);
 		cornell.addSphere(q);
 	}
 	else if(sc == DEER_SCENE) {	
@@ -79,7 +79,8 @@ int main() {
 	else if (sc == 4) {
 		ModelLoader ml("../model/Space.obj", ModelLoader::VERTEX_NORMALS);
 		cornell.addModel(ml, vec3(0.99f), DIFFUSE_MAT);
-		cornell.scaleObject(cornell.getModel(0), vec3(0.17f));
+		cornell.scaleObject(cornell.getModel(0), vec3(0.12f));
+		cornell.translateObject(cornell.getModel(0), vec3(0.f, -0.2f, 0.0f));
 	}
 	else {
 		return 1;
@@ -94,6 +95,8 @@ int main() {
 	path.attachShader(Shader::FRAGMENT, path.loadShader("../src/shaders/path_tracing.frag"), GL_TRUE);
 	path.compileProgram(GL_TRUE);
 
+	cornell.setWallColor(Scene::LEFT_WALL, vec3(0.6, 0.1, 0.8));
+	cornell.setWallColor(Scene::RIGHT_WALL, vec3(0.1, 0.9, 0.1));
 	tracer->setUniforms();
 	tracer->updateScene();
 
@@ -109,7 +112,7 @@ int main() {
 
 		fps.startTask();
 
-		tracer->draw(window.getCurrentWidth(), window.getCurrentHeight());
+		tracer->draw(window.getCurrentWidth(), window.getCurrentHeight(), &window);
 
 		fps.stopTask();
 		fps.gainFPS();

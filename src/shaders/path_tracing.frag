@@ -21,6 +21,14 @@ struct Ray{
 	vec3 direction;
 };
 
+// 
+struct Box{
+	float walls[5];
+	vec3 colors[5];
+	vec3 normals[5];
+	float reflectivity[5];
+};
+
 // Koule
 struct Sphere{
 	vec3 center;
@@ -70,6 +78,7 @@ struct Node{
 struct OctreeContext{
 	float tx0; float ty0; float tz0;
 	float tx1; float ty1; float tz1;
+	//int node_curr_init;
 	uint current; int node_id;
 	bool init;
 };
@@ -89,13 +98,19 @@ layout (std430, binding = 2) buffer node_indices{
 	int indices[];
 };
 
+// Koule
+layout (std430, binding = 3) buffer sphere_geom{
+	Sphere xspheres[];
+};
 
+uniform Box cornell_box;
 uniform Sphere spheres[4];
 uniform float randoms[30];
 uniform float sample_ID;
 uniform float stride;
 uniform vec3 light_pos;
 uniform vec3 view_pos;
+uniform int spheres_count;
 uniform int triangles_count;
 uniform int nodes_count;
 uniform int indices_count;
@@ -105,10 +120,11 @@ in vec3 scr_coord;
 out vec4 color;
 
 bool light_source = false;
-bool soft_shadows = false;
 
 float ambient = 0.05;
 float diffuse = 0.95;
+
+bool trian = true;
 
 vec3 light_color = vec3(1.0, 1.0, 1.0);
 
@@ -232,7 +248,7 @@ bool raySphereIntersection(Ray ray, Sphere sp, out Intersection inter){
 	vec3 center = sp.center;
 	float radius = sp.radius;
 
-	float t0, t1;
+	float t0;
 	vec3 L = center - ray.position;
 	float tca = dot(L, ray.direction);
 	
@@ -261,120 +277,41 @@ bool raySphereIntersection(Ray ray, Sphere sp, out Intersection inter){
 bool rayBoxIntersection(Ray ray, out Intersection inter){
 	
 	bool res = false;
-	float closest = 5.0;
+	float closest = 15.0;
+	float t = 10.0;
 
-	// Dolni stena
-	float planeHeight;
-	float t;
-	vec3 point;
-	//if(abs(t) < abs(closest)) closest = t;
-	if(ray.direction.y < 0.0){
-	planeHeight = DOWN + 0.2;
-	t = (planeHeight - ray.position.y) / ray.direction.y;
-	point = ray.position + (t * ray.direction);
-	//if(point.z > FRONT && point.z < 2.0 && point.x > LEFT && point.x < RIGHT){
-			if(abs(t) < abs(closest)) {
-				closest = t;
-				inter.dist = t;
-				inter.position = point;
-				inter.normal = vec3(0.0, 1.0, 0.0);
-				inter.color = vec3(0.9, 0.8, 0.0);
-				inter.color = vec3(0.99);
-				//inter.color = vec3(0.9, 0.1, 0.1);
-				inter.reflectivity = 0.1;
-				
-				res = true;	
-			}
-		//}
-	}
-	
-	// Horni stena
-	if(ray.direction.y > 0.0){
-		planeHeight = UP - 0.15;
-		t = (planeHeight - ray.position.y) / ray.direction.y;
-		point = ray.position + (t * ray.direction);
-	
-		//if(point.z > FRONT && point.z < 2.0 && point.x > LEFT && point.x < RIGHT){
-			if(abs(t) < abs(closest)){ 
-				closest = t;
-				inter.dist = t;
-				inter.position = point;
-				inter.normal = vec3(0.0, -1.0, 0.0);
-				//inter.color = vec3(0.9, 0.0, 0.3);
-				//inter.color = vec3(0.9, 0.1, 0.1);
-				inter.color = vec3(0.99);
-				inter.reflectivity = 0.1;
+	float nom[5] = {ray.position.y, ray.position.y, ray.position.x, ray.position.x, ray.position.z};
+	float denom[5] = {ray.direction.y, ray.direction.y, ray.direction.x, ray.direction.x, ray.direction.z};
+
+	for(int a = 0; a < 5; a++){
+		
+		if(a % 2 == 0){
+			if(denom[a] > 0.0) continue;
+		}
+
+		else{
+			if(denom[a] < 0.0) continue;
+		}
+		
+		t = (cornell_box.walls[a] - nom[a]) / denom[a];
+		
+		if(t < closest && t > 0.0){
+			closest = t;
 			
-				// Svetlo 
-				if(point.z > (light_pos.z - 0.1) && point.z < (light_pos.z + 0.1) && point.x > (light_pos.x - 0.1) && point.x < (light_pos.x + 0.1))
-					light_source = true;
+			inter.dist = t;
+			inter.position = ray.position + (t * ray.direction);
+			inter.color = cornell_box.colors[a];
+			inter.normal = cornell_box.normals[a];
+			inter.reflectivity = cornell_box.reflectivity[a];
+			
+			//if(inter.position.y == UP - 0.15 && (inter.position.z > (light_pos.z - 0.1) && inter.position.z < (light_pos.z + 0.1) ) && (inter.position.x > (light_pos.x - 0.1) && inter.position.x < (light_pos.x + 0.1)))
+				//light_source = true;
 
-				res = true;
-			}
-		//}
-	}
-
-	// Leva stena
-	if(ray.direction.x < 0.0){
-		planeHeight = LEFT;
-		t = (planeHeight - ray.position.x) / ray.direction.x;
-		point = ray.position + (t * ray.direction);
-	
-		//if(point.z > FRONT && point.z < 2.0 && point.y > DOWN && point.y < UP){
-			if(t < closest){ 
-				closest = t;
-				inter.dist = t;
-				inter.position = point;
-				inter.normal = vec3(1.0, 0.0, 0.0);
-				//inter.color = vec3(0.8, 0.99, 0.1);
-				inter.color = vec3(0.6, 0.1, 0.8);
-				inter.reflectivity = 0.1;
-				res = true;	
-			}
-		//}
-	}
-
-	// Prava stena
-	if(ray.direction.x > 0.0){
-		planeHeight = RIGHT;
-		t = (planeHeight - ray.position.x) / ray.direction.x;
-		point = ray.position + (t * ray.direction);
-	
-		//if(point.z > FRONT && point.z < 2.0 && point.y > DOWN && point.y < UP){
-			if(t < closest){
-				closest = t;
-				inter.dist = t;
-				inter.position = point;
-				inter.normal = vec3(-1.0, 0.0, 0.0);
-				inter.color = vec3(0.1, 0.9, 0.1);
-				inter.reflectivity = 0.1;
-				res = true;	
-			}
-		//}
-	}
-
-	// Predni stena
-	if(ray.direction.z < 0.0){
-		planeHeight = FRONT;
-		t = (planeHeight - ray.position.z) / ray.direction.z;
-		point = ray.position + (t * ray.direction);
-	
-		//if(point.x > LEFT && point.x < RIGHT && point.y > DOWN && point.y < UP){
-			if(t < closest){
-				closest = t;
-				inter.dist = t;
-				inter.position = point;
-				inter.normal = vec3(0.0, 0.0, 1.0);
-				inter.color = vec3(0.99);
-				//inter.color = vec3(0.9, 0.1, 0.1);
-				inter.reflectivity = 0.1;
-				res = true;
-			}
-		//}
+			res = true;
+		}
 	}
 
 	return res;
-
 }
 
 
@@ -385,7 +322,7 @@ bool rayBoxIntersection(Ray ray, out Intersection inter){
 
 // Prvni zasazeny uzel
 uint firstNode(float tx0, float ty0, float tz0, float txm, float tym, float tzm) {
-	uint answer = 0;
+	int answer = 0;
 							
 	if (tx0 > ty0) {
 		if (tx0 > tz0) { // PLANE YZ
@@ -432,6 +369,7 @@ bool iterativeTraversal(Ray ray, float tx0, float tx1, float ty0, float ty1, flo
 	int sp = 0;
 	int cycles = 0;
 	//float closest = 10.0;
+	trian = true;
 
 	do{
 		cycles += 1;
@@ -475,7 +413,7 @@ bool iterativeTraversal(Ray ray, float tx0, float tx1, float ty0, float ty1, flo
 							closest = inter.dist;
 							res = true;
 							inters = inter;
-							
+							trian = false;
 						}
 					}
 				}
@@ -731,14 +669,6 @@ bool calculCollision(Ray ray, out Intersection inter, bool shadow){
 
 	int sphere_cnt = 4;
 	
-	// Steny
-	if(!shadow){
-		if(rayBoxIntersection(ray, coll)){
-			intersect = true;
-			inter = coll;
-		}
-	}
-
 	// Koule
 	if(ray.position.y < light_pos.y){
 		for(int i = 0; i < sphere_cnt; i++){
@@ -751,23 +681,8 @@ bool calculCollision(Ray ray, out Intersection inter, bool shadow){
 		}
 	}
 
-	/*for(int j = 49; j < 57; j++){
-		if(nodes[j].leaf == 1){
-			for(int i = 0; i < nodes[j].count; i++){
-				//ab = 112;
-				if(rayTriangleIntersection(ray, triangles[indices[nodes[j].index + i]], coll)){
-					if(!intersect || coll.dist < inter.dist){
-						intersect = true;
-						inter = coll;
-					}
-				}
-			}
-		}
-		//if(j > 100) ab = 112;
-	}*/
-
 	// Octree
-	if(triangles_count > 0){
+	if(triangles_count > 0 && trian){
 		if(octreeTraversal(ray, coll)){
 			if(!intersect || coll.dist < inter.dist){
 				intersect = true;
@@ -776,19 +691,19 @@ bool calculCollision(Ray ray, out Intersection inter, bool shadow){
 		}
 	}
 	
-	// Trojuhelniky
-	/*for(int i = 0; i < triangles_count; i++){
-		if(rayTriangleIntersection(ray, triangles[i], coll)){
-			if(!intersect || coll.dist < inter.dist){
-				//if(i == 12) abc = true;
+	if(intersect) return true;
+		
+		// Steny
+		if(!shadow){
+			if(rayBoxIntersection(ray, coll)){
 				intersect = true;
 				inter = coll;
 			}
 		}
-	}*/
-		
+
 	return intersect;
 }
+
 
 // Vypocet osvetleni v bode
 vec3 directLight(vec3 position, vec3 normal, vec3 color){
@@ -805,9 +720,11 @@ vec3 directLight(vec3 position, vec3 normal, vec3 color){
   light_ray.position = position;
   light_ray.direction = light_dir;
   float len = length(light_pos - position);
+  //trian = false;
   shadow = calculCollision(light_ray, inter, true);
   direct = (ambient * color) + ((shadow? min(inter.dist * 4.9, 0.1) : 1) * max(dot(light_dir, normal), 0.0) * color * diffuse * light_color * (1.0 / (len * 1.1)));
- 
+  trian = true;
+
   return direct;
 }
 
@@ -817,68 +734,54 @@ vec3 pathTrace(Ray original_ray){
 	Ray ray = original_ray;
 	vec3 ray_color = vec3(1.0);
 	vec3 point_color;
-	vec3 albedo;
-	vec3 tangent, bitangent;
+	vec3 albedo = vec3(1.0);
 	Intersection inter;
 	int depth = 0;
 	float coef = 1.0;
+	vec3 color;
 
-	while (true) {
+	while (depth <= MAX_DEPTH) {
 		
-		if(!calculCollision(ray, inter, false) && depth != 0){
-			if(coef > 0.3){
-				ray_color = vec3(0.2);
+		// Zadna kolize
+		if(!calculCollision(ray, inter, false)){
+				ray_color = vec3(0.02);
 				break;
-			}
-			else if(coef > 0.1){
-				ray_color = vec3(0.7);
-				break;
-			}
-			/*else {
-				ray_color *= 1.9;
-				break;
-			}*/
 		}
 
-		// Kolize se zdrojem svetla -> bila barva
+		// Kolize se zdrojem svetla -> barva svetla
 		if(light_source){
 			ray_color = light_color;
 			break;
 		}
 
-		// Maximalni hloubka cesty -> navrat vysledne barvy
-		if(depth >= MAX_DEPTH)
-			break;
-
 		// Difuzni material
-		if(inter.reflectivity == DIFFUSE_MAT){
-			vec3 color = inter.color * coef * (1.0 - inter.reflectivity);
-			coef *= inter.reflectivity;
+		if(inter.reflectivity == DIFFUSE_MAT)
+			color = inter.color * coef * (1.0 - inter.reflectivity);
+		else if(inter.reflectivity == MIRROR_MAT)
+			color = inter.color * coef * inter.reflectivity;
+		else
+			color = inter.color * coef * 1.0;
+
+		coef *=  inter.reflectivity;
 		
-			if(depth == 0)
+		if(depth == 0)
 				albedo = color;
 
-			// Osvetleni v bode
-			point_color = directLight(inter.position, inter.normal, inter.color);
+		// Osvetleni v bode
+		point_color = directLight(inter.position, inter.normal, inter.color);
 
-			//return point_color;
+		// barva * BRDF(difuzni)
+		ray_color = (ray_color / PI + 2 * point_color) * albedo;
 
-			// barva * BRDF(difuzni)
-			ray_color = (ray_color / PI + 2 * point_color) * albedo;
-
-			// Konec cesty -> navrat vysledne barvy
-			if(randoms[int(gl_FragCoord.x * gl_FragCoord.y * sample_ID) % 30] > (max(color.r, max(color.g, color.b)))){
-				ray_color *= 1.12;
-				break;	
-			}			
-
-			// Dalsi odraz
-			if(inter.tangent == inter.bitangent){
-				calcTB(inter.normal, tangent, bitangent);
-				inter.tangent = tangent;
-				inter.bitangent = bitangent;
-			}
-  
+		// Konec cesty -> navrat vysledne barvy
+		if(randoms[int(gl_FragCoord.x * gl_FragCoord.y * sample_ID) % 30] > (max(color.r, max(color.g, color.b))))
+			break;	
+						
+		// Ziskani tangenty a binormaly v bode					
+		calcTB(inter.normal, inter.tangent, inter.bitangent);
+	
+		if(inter.reflectivity == DIFFUSE_MAT){
+			
 			// Vygenerovani nahodneho smeru odrazu
 			float rand1 = randoms[int(gl_FragCoord.x * gl_FragCoord.y * 2.7 * sample_ID) % 30];
 			float rand2 = randoms[int(gl_FragCoord.x * gl_FragCoord.y * 1.3 * sample_ID) % 30];
@@ -887,65 +790,15 @@ vec3 pathTrace(Ray original_ray){
 
 			ray.position = inter.position;
 			ray.direction = refl_dir;
+	
 		}
-
-		// Reflexni material
-		else if(inter.reflectivity == MIRROR_MAT){
-			vec3 color = inter.color * inter.reflectivity;
-			coef *= inter.reflectivity;
-
-			if(depth == 0)
-				albedo = color;
-
-			// Paprsek odrazeny podle normaly
+		
+		else{
+			if(inter.reflectivity == 0.8) inter.reflectivity = 0.0;
+			
+			vec3 rand_offset = vec3((inter.reflectivity * randoms[int(gl_FragCoord.x * gl_FragCoord.y * 2.7 * sample_ID) % 30])-(inter.reflectivity/2), (inter.reflectivity * randoms[int(gl_FragCoord.x * gl_FragCoord.y * 2.9 * sample_ID) % 30])-(inter.reflectivity/2), (inter.reflectivity * randoms[int(gl_FragCoord.x * gl_FragCoord.y * 2.2 * sample_ID) % 30])-(inter.reflectivity/2));
 			ray.position = inter.position + 0.001 * ray.direction;
-			ray.direction = normalize(reflect(ray.direction, inter.normal));
-		}
-
-		else if(inter.reflectivity == SPECULAR_MAT){
-			vec3 color = inter.color;
-			coef *= 0.1;
-
-			Intersection ii;
-			ray.position = inter.position + 0.001 * ray.direction;
-			ray.direction = reflect(ray.direction, inter.normal);
-			calculCollision(ray, ii, false);
-
-			// Odlesk od svetla
-			if(ii.position.x <= (light_pos.x + 0.1) && ii.position.x >= (light_pos.x - 0.1) && ii.position.y == UP){
-				if(ii.position.z <= (light_pos.z + 0.1) && ii.position.z >= (light_pos.z - 0.1))
-					return light_color;
-			}
-
-			if(depth == 0)
-				albedo = color;
-
-			// Osvetleni v bode
-			point_color = directLight(inter.position, inter.normal, inter.color);
-
-			// barva * BRDF
-			ray_color = (ray_color / PI + 2.0 * point_color) * albedo;
-			// barva odrazu
-			ray_color += 0.3 * directLight(ii.position, ii.normal, ii.color);;
-
-			// Konec cesty -> navrat vysledne barvy
-			if(randoms[int(gl_FragCoord.x * gl_FragCoord.y * sample_ID) % 30] > (max(color.r, max(color.g, color.b)))){
-				ray_color *= 1.17;
-				break;
-			}
-
-			// Dalsi odraz
-			calcTB(inter.normal, tangent, bitangent);
-  
-			// Vygenerovani nahodneho smeru odrazu
-			float rand1 = randoms[int(gl_FragCoord.x * gl_FragCoord.y * 2.7 * sample_ID) % 30];
-			float rand2 = randoms[int(gl_FragCoord.x * gl_FragCoord.y * 1.3 * sample_ID) % 30];
-			vec3 refl_dir = randomDirection(rand1, rand2);
-			refl_dir = convertToBNT(refl_dir, inter.normal, tangent, bitangent);
-
-			ray.position = inter.position;
-			ray.direction = refl_dir;
-
+			ray.direction = normalize((reflect(ray.direction, inter.normal))  + rand_offset);
 		}
 
 		depth += 1;
@@ -958,7 +811,7 @@ vec3 pathTrace(Ray original_ray){
 void main(){
 
 	ab = 5;
-
+	trian = true;
 	// Smer paprsku
 	vec3 ray_dir = vec3(scr_coord - view_pos);
 	ray_dir = normalize(ray_dir);

@@ -11,11 +11,13 @@
 
 Scene::Scene(vec3 lightPosition){
 	lightPos = lightPosition;
+	defaultScene();
 }
 
 Scene::Scene(vec3 lightPosition, vec3 lightColor){
 	lightPos = lightPosition;
 	lightCol = lightColor;
+	defaultScene();
 }
 
 vector<Sphere> Scene::getSpheres(){
@@ -46,6 +48,26 @@ vec3 Scene::getLightColor(){
 	return lightCol;
 }
 
+Scene::Box Scene::getBox(){
+	return cornellBox;
+}
+
+void Scene::setWall(int pos, float value){
+	cornellBox.walls[pos] = value;
+}
+
+void Scene::setWallColor(int pos, vec3 color){
+	cornellBox.colors[pos] = color;
+}
+
+void Scene::setWallNormal(int pos, vec3 normal){
+	cornellBox.normals[pos] = normal;
+}
+
+void Scene::setWallReflectivity(int pos, float value){
+	cornellBox.reflectivity[pos] = value;
+}
+
 void Scene::addSphere(Sphere obj){
 	spheres.push_back(obj);
 }
@@ -58,7 +80,7 @@ void Scene::addModel(ModelLoader obj, vec3 color, float material){
 	cout << "Preparing scene..." << endl;
 
 	for (int a = 0; a < len; a++) {
-		//cout << a << "/" << len << endl;
+		cout << a << "/" << len << endl;
 		geometry[a].vertex0 = vec4(obj.getData().at(a).getVertices().at(0), 1.0f);
 		geometry[a].vertex1 = vec4(obj.getData().at(a).getVertices().at(1), 1.0f);
 		geometry[a].vertex2 = vec4(obj.getData().at(a).getVertices().at(2), 1.0f);
@@ -167,4 +189,31 @@ void Scene::rotateObject(Model md, float angle, int axis){
 		md.data[i].normal1 = normalize(md.data[i].normal1);
 		md.data[i].normal2 = normalize(md.data[i].normal2);
 	}
+}
+
+void Scene::defaultScene(){
+	cornellBox.walls[0] = DEFAULT_DOWN;
+	cornellBox.colors[0] = vec3(1);
+	cornellBox.normals[0] = vec3(0, 1, 0);
+	cornellBox.reflectivity[0] = DIFFUSE_MAT;
+
+	cornellBox.walls[1] = DEFAULT_UP;
+	cornellBox.colors[1] = vec3(1);
+	cornellBox.normals[1] = vec3(0, -1, 0);
+	cornellBox.reflectivity[1] = DIFFUSE_MAT;
+
+	cornellBox.walls[2] = DEFAULT_LEFT;
+	cornellBox.colors[2] = vec3(1);
+	cornellBox.normals[2] = vec3(1, 0, 0);
+	cornellBox.reflectivity[2] = DIFFUSE_MAT;
+
+	cornellBox.walls[3] = DEFAULT_RIGHT;
+	cornellBox.colors[3] = vec3(1);
+	cornellBox.normals[3] = vec3(-1, 0, 0);
+	cornellBox.reflectivity[3] = DIFFUSE_MAT;
+
+	cornellBox.walls[4] = DEFAULT_FRONT;
+	cornellBox.colors[4] = vec3(1);
+	cornellBox.normals[4] = vec3(0, 0, 1);
+	cornellBox.reflectivity[4] = DIFFUSE_MAT;
 }
