@@ -14,6 +14,8 @@ I,J,K,L - Light move
 
 P - Take screenshot (png format)
 
+T - Change walls color
+
 ## Project progress
 
 Implemented Ray Tracing method.
@@ -26,10 +28,10 @@ Implemented Model support.
 
 ## Example
 
-Cornell box with 4 spheres(different materials) and model of house(16 faces)
+Cornell box with Stanford bunny model (336 faces)
 
-![Cornell Box](example/pt_house_example.png?raw=true "Cornell Box")
+![Cornell Box](example/bunny.png?raw=true "Cornell Box")
 
-Cornell box with bunny model(292 faces)
+Cornell box with deer model (1 503 faces)
 
-![Cornell Box](example/pt_bunny_example.png?raw=true "Cornell Box")
+![Cornell Box](example/deer.png?raw=true "Cornell Box")
