@@ -22,17 +22,29 @@ class ModelLoader {
 
 public:
 
-	ModelLoader(string path, int mode);
-	vector<Triangle> getData();
-
-	void cleanData();
-
-	enum Modes{
+	enum Modes {
 		VERTEX_UVS_NORMALS,
 		VERTEX_UVS,
 		VERTEX_NORMALS,
 		VERTEX
 	};
+
+	typedef struct material {
+		float absorption;
+		float disperse;
+		float reflection;
+		vec3 color;
+	} Material;
+
+	ModelLoader(string path, Modes mode, Material material);
+	vector<Triangle> getData();
+
+	void cleanData();
+
+	vector<vec4> va;
+	vector<vec4> ua;
+	vector<vec4> na;
+	vector<vec4> ca;
 
 private:
 
@@ -48,5 +60,6 @@ private:
 
 	vector<Triangle> triangles;
 
-	int load_mode;
+	Modes load_mode;
+	Material mat;
 };

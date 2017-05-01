@@ -50,6 +50,8 @@ public:
 		float walls[5];
 		vec3 normals[5];
 		vec3 colors[5];
+		float absorption[5];
+		float disperse[5];
 		float reflectivity[5];
 	} Box;
 
@@ -69,7 +71,6 @@ public:
 	// Struktura pro ulozeni modelu
 	typedef struct model {
 		Primitive* data;
-		int triangles_count;
 	} Model;
 
 	// Konstruktor
@@ -78,7 +79,9 @@ public:
 
 	// Ziskani obsahu sceny
 	vector<Sphere> getSpheres();
+	vector<Model> getModels();
 	Model getModel(int pos);
+	int totalTriangles();
 	int modelsCount();
 	int spheresCount();
 	vec3 getLight();
@@ -92,12 +95,12 @@ public:
 
 	// Pridani objektu do sceny
 	void addSphere(Sphere obj);
-	void addModel(ModelLoader obj, vec3 color, float material);
+	void addModel(ModelLoader obj);
 	void addModel(Model mod);
 
-	void translateObject(Model md, vec3 translate);
-	void scaleObject(Model md, vec3 scale);
-	void rotateObject(Model md, float angle, int axis);
+	void translateObject(int modelID, vec3 translate);
+	void scaleObject(int modelID, vec3 scale);
+	void rotateObject(int modelID, float angle, int axis);
 
 private:
 
@@ -110,6 +113,8 @@ private:
 	// Svetlo sceny
 	vec3 lightPos;
 	vec3 lightCol;
+
+	vector<int> triangles_count;
 
 	Box cornellBox;
 };

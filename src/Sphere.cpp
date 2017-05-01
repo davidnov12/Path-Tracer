@@ -9,11 +9,14 @@
 
 #include "Sphere.h"
 
-Sphere::Sphere(float radius, vec3 center, vec3 color, double probability){
+
+Sphere::Sphere(float radius, vec3 center, Material material){
 	this->radius = radius;
 	this->center = center;
-	this->color = color;
-	this->probability = probability;
+	this->color = material.color;
+	this->reflection = material.reflection;
+	this->absorp = material.absorption;
+	this->disper = material.disperse;
 }
 
 float Sphere::getRadius(){
@@ -26,8 +29,4 @@ vec3 Sphere::getCenter(){
 
 vec3 Sphere::getColor(){
 	return color;
-}
-
-double Sphere::getProbability(){
-	return probability;
 }

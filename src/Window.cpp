@@ -13,7 +13,7 @@ float x_off, y_off;
 float lx_off, lz_off;
 float lastX, lastY;
 float rWidth, rHeight;
-bool firstMouse = true, pressed, resized, light_move, save_img = false;
+bool firstMouse = true, pressed, resized, light_move, save_img = false, walls = false;
 
 
 #define CAMERA_OFFSET 0.05
@@ -29,7 +29,7 @@ bool firstMouse = true, pressed, resized, light_move, save_img = false;
 #define LIGHT_MAX_Z 0.55
 #define LIGHT_MIN_Z -0.35
 
-void cameraMove(GLFWwindow* window, int key, int scancode, int action, int mode) {
+void keyboard(GLFWwindow* window, int key, int scancode, int action, int mode) {
 	if (key == GLFW_KEY_W && action == GLFW_PRESS)
 		y_off += CAMERA_OFFSET;
 	if (key == GLFW_KEY_A && action == GLFW_PRESS)
@@ -58,6 +58,10 @@ void cameraMove(GLFWwindow* window, int key, int scancode, int action, int mode)
 
 	if (key == GLFW_KEY_P && action == GLFW_PRESS) {
 		save_img = true;
+	}
+
+	if (key == GLFW_KEY_T && action == GLFW_PRESS) {
+		walls = true;
 	}
 	
 	if (x_off > CAMERA_MAX_X) x_off = CAMERA_MAX_X;
@@ -209,6 +213,14 @@ bool Window::lightMove(){
 	return false;
 }
 
+bool Window::wallsColor(){
+	if(walls){
+		walls = false;
+		return true;
+	}
+	return false;
+}
+
 void Window::savePNG(){
 	char* pixels = new char[width * height * 4];
 
@@ -254,7 +266,7 @@ GLFWwindow * Window::createWindow(){
 		return NULL;
 
 	// Atributy okna
-	//glfwSwapInterval(60);
+	//glfwSwapInterval(0);
 	glfwWindowHint(GLFW_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_VERSION_MINOR, 2);
 	glfwWindowHint(GLFW_VISIBLE, GL_TRUE);
@@ -274,7 +286,7 @@ GLFWwindow * Window::createWindow(){
 	// Vytvoreni kontextu pro okno
 	glfwMakeContextCurrent(window);
 
-	glfwSetKeyCallback(window, cameraMove);
+	glfwSetKeyCallback(window, keyboard);
 	glfwSetMouseButtonCallback(window, press);
 	glfwSetCursorPosCallback(window, mouse);
 	glfwSetWindowSizeCallback(window, resize);
@@ -294,7 +306,6 @@ GLFWwindow * Window::createWindow(){
 	glEnable(GL_MULTISAMPLE);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	//glEnable(GL_DEPTH_TEST);
 
 	return window;
 }

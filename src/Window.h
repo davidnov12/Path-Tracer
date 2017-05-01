@@ -54,6 +54,7 @@ public:
 	// Vlastnosti sceny a okna
 	bool isResized();
 	bool lightMove();
+	bool wallsColor();
 
 	// Ulozeni snimku do png
 	void savePNG();

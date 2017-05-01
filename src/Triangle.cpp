@@ -23,6 +23,10 @@ Triangle::Triangle(vector<vec3> verts, vector<vec2> uvs, vector<vec3> norm){
 	normal = norm;
 }
 
+void Triangle::append(vector<vec3> verts, vector<vec2> uvs, vector<vec3> normal){
+
+}
+
 vector<vec3> Triangle::getVertices(){
 	return vertices;
 }

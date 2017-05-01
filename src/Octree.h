@@ -18,7 +18,7 @@
 #define FRONT -0.9
 #define BACK 0.9
 
-#define MAX_NODES 2.5 * md.triangles_count
+#define MAX_NODES 2.5 * triangles_count
 
 using namespace std;
 
@@ -36,7 +36,9 @@ public:
 		vec4 end;
 	} Node;
 
-	Octree(Scene::Model md, int primitivesPerList);
+	Octree();
+	void build(Scene::Model md, int totalTriangles, int primitivesPerList);
+	void build(Scene::Model* md, int modelCount, int totalTriangles, int primitivesPerList);
 	int* getIndices();
 	Node* getNodes();
 	int getIndicesLength();
@@ -62,6 +64,7 @@ public:
 	vector<vector<int>> tmp_indices;
 	vector<int> indices;
 	int nodes_count;
+	int triangles_count;
 
 	Scene::Model mod;
 	float t = 5.2;

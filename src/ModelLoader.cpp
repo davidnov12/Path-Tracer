@@ -10,9 +10,17 @@
 //#define _CRT_SECURE_NO_WARNINGS
 #include "ModelLoader.h"
 
-ModelLoader::ModelLoader(string path, int mode){
-	loadModel(path, mode);
+
+/*ModelLoader::ModelLoader(string path, Modes mode, Material material){
 	load_mode = mode;
+	mat = material;
+	loadModel(path, mode);
+}*/
+
+ModelLoader::ModelLoader(string path, Modes mode, Material material){
+	load_mode = mode;
+	mat = material;
+	loadModel(path, mode);
 }
 
 vector<Triangle> ModelLoader::getData(){
@@ -97,18 +105,11 @@ void ModelLoader::loadModel(string path, int mode){
 			vector<vec3> verts;
 			vector<vec2> uvs;
 			vector<vec3> normal;
-
+			
 			if (mode == VERTEX_UVS_NORMALS) {
 				sscanf_s(tmp.c_str(), "%d/%d/%d %d/%d/%d %d/%d/%d", indices, indices + 1, indices + 2,
 					indices + 3, indices + 4, indices + 5, indices + 6, indices + 7, indices + 8);
 
-				//cout << indices[0] << endl;
-
-				//for(int e = 0; e < vertices.size(); e++){
-					//cout << indices[0] - 1 << ".x  " << vertices.at(indices[0] - 1).x << endl;
-					//cout << indices[0] - 1 << ".y  " << vertices.at(indices[0] - 1).y << endl;
-					//cout << indices[0] - 1 << ".z  " << vertices.at(indices[0] - 1).z << endl;
-				//}
 				verts.push_back(vertices.at(indices[0] - 1));
 				verts.push_back(vertices.at(indices[3] - 1));
 				verts.push_back(vertices.at(indices[6] - 1));
@@ -117,9 +118,22 @@ void ModelLoader::loadModel(string path, int mode){
 				uvs.push_back(tex_coords.at(indices[4] - 1));
 				uvs.push_back(tex_coords.at(indices[7] - 1));
 
-				normal.push_back((normals.at(indices[2] - 1)));
-				normal.push_back((normals.at(indices[5] - 1)));
-				normal.push_back((normals.at(indices[8] - 1)));
+				normal.push_back(normals.at(indices[2] - 1));
+				normal.push_back(normals.at(indices[5] - 1));
+				normal.push_back(normals.at(indices[8] - 1));
+
+				va.push_back(vec4(vertices.at(indices[0] - 1), 1.0f));
+				va.push_back(vec4(vertices.at(indices[3] - 1), 1.0f));
+				va.push_back(vec4(vertices.at(indices[6] - 1), mat.disperse));
+
+				ua.push_back(vec4(tex_coords.at(indices[1] - 1), tex_coords.at(indices[4] - 1)));
+				ua.push_back(vec4(tex_coords.at(indices[7] - 1), 1.0f, 1.0f));
+
+				na.push_back(vec4(normals.at(indices[2] - 1), 1.0f));
+				na.push_back(vec4(normals.at(indices[5] - 1), 1.0f));
+				na.push_back(vec4(normals.at(indices[8] - 1), mat.absorption));
+
+				ca.push_back(vec4(0.9, 0.9, 0.9, 0.0));
 
 				Triangle t(verts, uvs, normal);
 
@@ -141,6 +155,19 @@ void ModelLoader::loadModel(string path, int mode){
 				normal.push_back((normals.at(indices[3] - 1)));
 				normal.push_back((normals.at(indices[5] - 1)));
 
+				va.push_back(vec4(vertices.at(indices[0] - 1), 1.0f));
+				va.push_back(vec4(vertices.at(indices[2] - 1), 1.0f));
+				va.push_back(vec4(vertices.at(indices[4] - 1), mat.disperse));
+
+				ua.push_back(vec4(0.0f));
+				ua.push_back(vec4(0.0f));
+
+				na.push_back(vec4(normals.at(indices[1] - 1), 1.0f));
+				na.push_back(vec4(normals.at(indices[3] - 1), 1.0f));
+				na.push_back(vec4(normals.at(indices[5] - 1), mat.absorption));
+
+				ca.push_back(vec4(mat.color, mat.reflection));
+
 				Triangle t(verts, normal);
 
 				triangles.push_back(t);
@@ -161,6 +188,19 @@ void ModelLoader::loadModel(string path, int mode){
 				uvs.push_back(tex_coords.at(indices[3] - 1));
 				uvs.push_back(tex_coords.at(indices[5] - 1));
 
+				va.push_back(vec4(vertices.at(indices[0] - 1), 1.0f));
+				va.push_back(vec4(vertices.at(indices[2] - 1), 1.0f));
+				va.push_back(vec4(vertices.at(indices[4] - 1), mat.disperse));
+
+				ua.push_back(vec4(tex_coords.at(indices[1] - 1), tex_coords.at(indices[3] - 1)));
+				ua.push_back(vec4(tex_coords.at(indices[5] - 1), 1.0f, 1.0f));
+
+				na.push_back(vec4(0.0f));
+				na.push_back(vec4(0.0f));
+				na.push_back(vec4(mat.absorption));
+
+				ca.push_back(vec4(mat.color, mat.reflection));
+
 				Triangle t(verts, uvs, normal);
 
 				triangles.push_back(t);
@@ -171,6 +211,19 @@ void ModelLoader::loadModel(string path, int mode){
 				verts.push_back(vertices.at(indices[0] - 1));
 				verts.push_back(vertices.at(indices[1] - 1));
 				verts.push_back(vertices.at(indices[2] - 1));
+
+				va.push_back(vec4(vertices.at(indices[0] - 1), 1.0f));
+				va.push_back(vec4(vertices.at(indices[1] - 1), 1.0f));
+				va.push_back(vec4(vertices.at(indices[2] - 1), mat.disperse));
+
+				ua.push_back(vec4(0.0f));
+				ua.push_back(vec4(0.0f));
+
+				na.push_back(vec4(0.0f));
+				na.push_back(vec4(0.0f));
+				na.push_back(vec4(mat.absorption));
+
+				ca.push_back(vec4(mat.color, mat.reflection));
 
 				Triangle t(verts, uvs, normal);
 

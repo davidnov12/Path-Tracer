@@ -10,25 +10,45 @@
 
 #include "Octree.h"
 
-Octree::Octree(Scene::Model md, int primitivesPerList){
-	if (md.data == NULL) return;
-	mod = md;
-	int lf = 0;
-	
+Octree::Octree(){
+
+}
+
+void Octree::build(Scene::Model md, int totalTriangles, int primitivesPerList){
+//if (md.data.) return;
+//mod = md;
+int lf = 0;
+triangles_count = totalTriangles;
+
+cout << "Octree building..." << endl;
+
+initOctree();
+buildOctree(md, primitivesPerList);
+linkOctree();
+
+cout << "Octree builded." << endl;
+cout << "Total: " << nodes.size() << " nodes" << endl;
+}
+
+
+void Octree::build(Scene::Model* md, int modelCount, int totalTriangles, int primitivesPerList) {
+
+	triangles_count = totalTriangles;
 	cout << "Octree building..." << endl;
 
-	initOctree();
-	buildOctree(md, primitivesPerList);
-	linkOctree();
+	for (int i = 0; i < modelCount; i++) {
+		//if (md.data().data.empty()) return;
+		mod = md[i];
+		int lf = 0;
+
+		initOctree();
+		buildOctree(mod, primitivesPerList);
+		linkOctree();
+
+	}
 
 	cout << "Octree builded." << endl;
 	cout << "Total: " << nodes.size() << " nodes" << endl;
-	/*for(int i = 0; i < nodes.size(); i++)
-		if(nodes.at(i).leaf){
-			std::cout << "INDICES: " << i << "   " << nodes.at(i).count << endl;
-			lf++;
-		}
-	cout << "LEAFS: " << lf << endl;*/
 }
 
 int * Octree::getIndices() {
@@ -74,29 +94,16 @@ void Octree::buildOctree(Scene::Model md, int primitivesPerList) {
 
 	int cn = 0;
 	
-	//cout << "FACES " << md.triangles_count << endl;
-
-	//makeChilds(0);
-	//makeChilds(5);
-
 	// Vsechny uzly Octree
 	for (int i = 0; i < nodes.size(); i++) {
-		//cout << i << endl;
-		//cout << "Building Octree... " << i / MAX_NODES << endl;
-
+		
 		// Listove uzly
 		if (nodes.at(i).leaf) {
 
 			// Vsechny trojuhelniky
-			for (int j = 0; j < md.triangles_count; j++) {
-				//cout << "BBOX: "  << i << "    " << nodes.at(i).start.x << " " << nodes.at(i).start.y << " " << nodes.at(i).start.z << endl;
-				// Prusecik bounding boxu a trojuhelniku
-
-
+			for (int j = 0; j < triangles_count; j++) {
+			
 				if (trinagleAABBIntersection(vec3(md.data[j].vertex0), vec3(md.data[j].vertex1), vec3(md.data[j].vertex2), vec3(nodes.at(i).start), vec3(nodes.at(i).end))) {
-					//cout << "PASSED\n";
-					// Novy trojuhelnik
-					//if (!uniqueIndices(j, i))
 					used.push_back(j);
 					tmp_indices.at(i).push_back(j);
 				}

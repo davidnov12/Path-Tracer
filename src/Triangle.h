@@ -23,6 +23,8 @@ public:
 	Triangle(vector<vec3> verts, vector<vec3> norm);
 	Triangle(vector<vec3> verts, vector<vec2> uvs, vector<vec3> norm);
 
+	void append(vector<vec3> verts, vector<vec2> uvs, vector<vec3> normal);
+
 	// Ziskani vrcholu a normaly trojuhelniku
 	vector<vec3> getVertices();
 	vector<vec2> getUVs();

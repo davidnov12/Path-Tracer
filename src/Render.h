@@ -34,7 +34,7 @@ public:
 	void setUniforms();
 
 	// Pohyb kamery
-	void cameraMove(float x, float y, float lx, float lz, bool resized, bool light_move, bool* moved);
+	void cameraMove(float x, float y, float lx, float lz, bool resized, bool light_move, bool* moved, bool walls);
 
 	// Priprava kreslici textury
 	void setTextureFramebuffer();
@@ -72,6 +72,8 @@ private:
 	// Vzorky pro PT
 	GLfloat id = 1.0, stride = 1.0, step = 1.0;
 	GLfloat last_x = 0, last_y = 0;
+
+	bool wallColor = true;
 
 	// Shader program pro vykreslovani
 	Shader* program;
