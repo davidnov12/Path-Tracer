@@ -24,8 +24,6 @@ Implemented Path Tracing method.
 
 Implemented Model support.
 
-<b>To do:</b> Acceleration by Octree
-
 ## Example
 
 Cornell box with Stanford bunny model (336 faces)
